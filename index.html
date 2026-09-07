@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nami™ Art Productions</title>
+  <meta name="description" content="Nami™ Art Productions — everything in nature moves in waves. Light, water and above all, sound.">
+  <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="Images/favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+  <div class="nami">
+
+    <!-- ============ LOGO / NAVSTAR ============ -->
+    <header class="nami--logo__navstar">
+      <div class="nami--logo__wrapper">
+        <img class="nami--logo" src="Images/nami--logo.svg" alt="Nami™ Art Productions">
+      </div>
+    </header>
+
+    <!-- ============ SLIDER ============ -->
+    <main class="nami--main">
+      <div class="slider" data-slider>
+        <div class="slider__stage" data-slider-stage aria-live="polite">
+          <!-- slajdy generuje script.js na podstawie tablicy SLIDES -->
+
+          <button class="slider__nav slider__nav--prev" type="button" data-slider-prev aria-label="Previous photo"></button>
+          <button class="slider__nav slider__nav--next" type="button" data-slider-next aria-label="Next photo"></button>
+
+          <button class="nami--mute" type="button" data-mute aria-pressed="false">Turn off effects</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- ============ BOTTOM ============ -->
+    <div class="nami--bottom-wrapper">
+
+      <div class="nami--bottom-text-wrapper">
+        <p class="nami--text">
+          <span class="nami--text__lead">Everything in nature moves in waves. Light, water and above all, sound.</span>
+          Nami is the flow of energy between the stage and the audience. It is also a tribute to the idea of return.
+          Every wave comes back. In the same way, we bring archival recordings back to life, giving them new energy
+          and a contemporary rhythm. We create productions that carry you, soothe you or move you, always in motion,
+          always in harmony.
+        </p>
+      </div>
+
+      <footer class="nami--footer">
+        <div class="nami--footer-object nami--footer-object-01">
+          <a class="nami--button" href="mailto:kswodecka@gmail.com">kswodecka@gmail.com</a>
+        </div>
+        <div class="nami--footer-object nami--footer-object-02">
+          <p class="nami--caption-text">©Nami™Art Productions 2026</p>
+        </div>
+        <div class="nami--footer-object nami--footer-object-03">
+          <a class="nami--button" href="tel:+48606620787">+48 606 620 787</a>
+        </div>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

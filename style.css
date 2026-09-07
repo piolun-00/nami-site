@@ -1,0 +1,524 @@
+/* =========================================================
+   NAMI™ ART PRODUCTIONS
+   Mobile first:  base = mobile (375 / 390)
+                  @768  = tablet portrait (1024)
+                  @1200 = desktop (1440 / 1920)
+   ========================================================= */
+
+/* ---------- FONTY ---------- */
+@font-face {
+  font-family: "Univers Next Pro";
+  src: url("Typefaces/UniversNextPro-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Univers Next Pro Cond";
+  src: url("Typefaces/UniversNextPro-HeavyCond.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- TOKENY ---------- */
+:root {
+  --color-bg: #ffffff;
+  --color-fg: #000000;
+  --color-placeholder: #d9d9d9;
+
+  --font-text: "Univers Next Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Univers Next Pro Cond", "Helvetica Neue Condensed", "Arial Narrow", sans-serif;
+
+  --slide-fade: 550ms;
+}
+
+/* ---------- RESET ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-text);
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img { display: block; max-width: 100%; }
+p    { margin: 0; }
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-position: from-font;
+  /* linia przerywa się na ogonkach znaków (np. @) zamiast je przecinać */
+  text-decoration-skip-ink: auto;
+}
+
+/* =========================================================
+   LAYOUT — BASE / MOBILE
+   ========================================================= */
+.nami {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100svh;
+  padding: 8px 16px 2px;
+}
+
+/* ---------- LOGO ---------- */
+.nami--logo__navstar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 80px;
+  /* padding, a nie sztywna wysokość — logo skaluje się z szerokością
+     kontentu, więc nagłówek musi rosnąć razem z nim. Dzięki temu
+     między logo a zdjęciem zawsze zostaje odstęp. */
+  padding: 19px 0;
+  flex: none;
+}
+
+.nami--logo__wrapper {
+  width: 100%;   /* na mobile logo na całą szerokość kontentu */
+}
+
+.nami--logo {
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- SLIDER ---------- */
+.nami--main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding-bottom: 24px;
+}
+
+.slider {
+  position: relative;
+  width: 100%;
+  padding-bottom: 20px; /* miejsce na podpis pod zdjęciem */
+}
+
+.slider__stage {
+  position: relative;
+  width: 100%;
+  /* poziom bierzemy na siebie (przewijanie zdjęć),
+     pion zostaje przeglądarce (przewijanie strony) */
+  touch-action: pan-y;
+  /* proporcja kadru z Figmy — mobile 343 x 264 */
+  aspect-ratio: 343 / 264;
+}
+
+.slider__slide {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--slide-fade) ease, visibility 0s linear var(--slide-fade);
+}
+
+.slider__slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--slide-fade) ease, visibility 0s;
+}
+
+.slider__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-placeholder);
+}
+
+.slider__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* podpis zdjęcia — na mobile i tablecie po prawej pod zdjęciem,
+   bo po lewej stoi przycisk MUTE */
+.nami--caption-small {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+/* strefy klikalne prev / next — na samym zdjęciu */
+.slider__nav {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.slider__nav--prev { left: 0;  cursor: w-resize; }
+.slider__nav--next { right: 0; cursor: e-resize; }
+.slider__nav:focus-visible { outline: 2px solid var(--color-fg); outline-offset: -4px; }
+
+/* przycisk MUTE — pod zdjęciem, przy jego lewej krawędzi.
+   Przekreślony = efekty wyłączone. */
+.nami--mute {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 3;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg);
+  font-family: var(--font-text);
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nami--mute:focus-visible {
+  outline: 1px solid var(--color-fg);
+  outline-offset: 2px;
+}
+
+/* jedno zdjęcie — nawigacja niepotrzebna */
+.slider.is-single .slider__nav { display: none; }
+
+/* ---------- BOTTOM ---------- */
+.nami--bottom-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  width: 100%;
+  flex: none;
+}
+
+.nami--bottom-text-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+.nami--text {
+  width: 100%;
+  /* pion zostaje przeglądarce (przewijanie strony), poziome
+     przeciągnięcie palcem po literach należy do nas */
+  touch-action: pan-y;
+  font-size: 14px;
+  line-height: 17px;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* na mobile tekst jest jednym ciągiem, od tabletu pierwsze zdanie ma swój wiersz */
+.nami--text__lead { display: inline; }
+
+.nami--footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.nami--footer-object {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* kolejność na mobile: e-mail, telefon, copyright */
+.nami--footer-object-01 { order: 1; }
+.nami--footer-object-03 { order: 2; }
+.nami--footer-object-02 { order: 3; padding-top: 12px; }
+
+.nami--button {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 21px;
+  line-height: 24px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nami--caption-text {
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* rozpraszanie tekstu pod kursorem (moduł testowy w script.js).
+   inline-block, bo transform nie działa na zwykłym inline. */
+.nami--text.is-split .w {
+  display: inline-block;
+}
+
+.nami--text .ch__g {
+  display: inline-block;
+}
+
+.nami--text .ch {
+  display: inline-block;
+  transition:
+    transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 420ms ease,
+    filter 420ms ease;
+}
+
+/* =========================================================
+   ANIMACJE WEJŚCIA
+   Start dopiero gdy pierwsze zdjęcie jest gotowe (klasa .is-ready
+   z script.js). Bez JS nic się nie ukrywa — treść jest widoczna.
+   ========================================================= */
+@keyframes nami-in {
+  from { opacity: 0; transform: translateY(var(--rise, 12px)); }
+  to   { opacity: 1; transform: none; }
+}
+
+.js .nami--logo__wrapper,
+.js .slider__stage,
+.js .nami--caption-small,
+.js .nami--mute,
+.js .nami--text,
+.js .nami--footer-object {
+  opacity: 0;
+}
+
+.js.is-ready .nami--logo__wrapper,
+.js.is-ready .slider__stage,
+.js.is-ready .nami--caption-small,
+.js.is-ready .nami--mute,
+.js.is-ready .nami--text,
+.js.is-ready .nami--footer-object {
+  animation: nami-in 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* kolejność wejścia */
+.nami--logo__wrapper   { --d: 0ms;   --rise: -32px; } /* logo wjeżdża od góry */
+.slider__stage         { --d: 140ms; --rise: 14px; }
+.nami--caption-small   { --d: 420ms; --rise: 6px; }
+.nami--mute            { --d: 460ms; --rise: 6px; }
+.nami--text            { --d: 340ms; }
+.nami--footer-object-01 { --d: 500ms; --rise: 8px; }
+.nami--footer-object-03 { --d: 560ms; --rise: 8px; }
+.nami--footer-object-02 { --d: 620ms; --rise: 8px; }
+
+/* podpis na desktopie jest obrócony — animujemy tylko krycie,
+   żeby nie nadpisać rotacji */
+@keyframes nami-in-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* =========================================================
+   TABLET PORTRAIT  (≥768px)
+   ========================================================= */
+@media (min-width: 768px) {
+
+  .nami { padding: 8px 24px 12px; }
+
+  .nami--logo__navstar {
+    min-height: 104px;
+    padding: 24px 0;
+  }
+  .nami--logo__wrapper { max-width: 460px; }
+
+  .nami--main { padding-bottom: 64px; }
+
+  .slider__stage {
+    /* proporcja kadru z Figmy — tablet 976 x 800 */
+    aspect-ratio: 976 / 800;
+  }
+
+  .nami--caption-small {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .nami--mute {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .nami--bottom-wrapper { gap: 32px; }
+
+  .nami--text {
+    font-size: 18px;
+    line-height: 22px;
+  }
+  .nami--text__lead { display: block; }
+
+  .nami--caption-text {
+    font-size: 16px;
+    line-height: 20px;
+  }
+}
+
+/* =========================================================
+   STOPKA W RZĘDZIE  (≥980px)
+   Trzy kolumny mają min-width: 300px, więc rząd mieści się
+   dopiero od 3 x 300 + 2 x 16 (gap) + 48 (padding) = 980px.
+   Poniżej tego progu wraca układ i kolejność z mobile.
+   ========================================================= */
+@media (min-width: 980px) {
+
+  .nami--footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .nami--footer-object {
+    flex: 1 1 300px;
+    min-width: 300px;
+    width: auto;
+    order: 0;
+  }
+  .nami--footer-object-01 { justify-content: flex-start; --d: 500ms; }
+  .nami--footer-object-02 { justify-content: center; padding-top: 0; --d: 560ms; }
+  .nami--footer-object-03 { justify-content: flex-end; --d: 620ms; }
+}
+
+/* =========================================================
+   DESKTOP  (≥1200px) — 1440 / 1920
+   ========================================================= */
+@media (min-width: 1200px) {
+
+  .nami {
+    padding: 16px 32px;
+  }
+
+  .nami--logo__navstar { padding: 36px 0; }
+  .nami--logo__wrapper { max-width: 263px; }
+
+  .nami--main {
+    align-items: center;
+    min-height: 0;
+    padding-bottom: 64px;
+  }
+
+  .slider {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1120px;
+    min-height: 240px;   /* minimalna wysokosc zdjecia na desktop */
+    padding-bottom: 0;
+  }
+
+  /* --ar (proporcja zdjęcia) i --stage-h (dostępna wysokość) ustawia
+     script.js. Szerokość wynika z wysokości, wysokość z proporcji —
+     dzięki temu scena to dokładnie kadr zdjęcia, więc podpis i MUTE
+     trzymają się jego krawędzi niezależnie od kształtu okna. */
+  .slider__stage {
+    width: min(100%, calc(var(--stage-h, 640px) * var(--ar, 1.75)));
+    height: auto;
+    max-height: 100%;
+    min-height: 240px;
+    aspect-ratio: var(--ar, 1.75);
+  }
+
+  .slider__slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* --ar  (proporcja zdjecia) i --stage-h (dostepna wysokosc) ustawia script.js.
+     Szerokosc wynika z wysokosci, a wysokosc z proporcji => ramka ZAWSZE
+     ma dokladnie rozmiar zdjecia, wiec podpis trzyma sie jego dolnej krawedzi. */
+  .slider__frame {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    background: none;
+  }
+
+  /* podpis pionowo, po lewej stronie zdjęcia, wyrównany do dołu */
+  .nami--caption-small {
+    left: auto;
+    top: auto;
+    right: 100%;
+    bottom: 0;
+    margin: 0 6px 0 0;
+    font-size: 12px;
+    line-height: 14px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  /* obrócony podpis: sam fade, bez transformacji */
+  .js.is-ready .nami--caption-small {
+    animation-name: nami-in-fade;
+  }
+
+
+  .nami--bottom-wrapper { gap: 16px; }
+  .nami--bottom-text-wrapper { max-width: 960px; }
+
+  .nami--text {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .nami--footer-object {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .nami--button { font-size: 18px; }
+
+  .nami--caption-text {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+/* =========================================================
+   A11Y
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .slider__slide { transition: none; }
+
+  .js .nami--logo__wrapper,
+  .js .slider__stage,
+  .js .nami--caption-small,
+  .js .nami--mute,
+  .js .nami--text,
+  .js .nami--footer-object {
+    opacity: 1;
+    animation: none;
+  }
+}
