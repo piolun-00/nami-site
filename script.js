@@ -71,6 +71,17 @@ const NO_REPEAT = 5;
    ========================================================= */
 const TEXT_SCATTER = {
   enabled: true,
+  radius: 110,
+  shift: 20,
+  rotate: 14,
+  blur: 1.8,
+  fade: 0.35
+};
+
+/* To samo dla dotyku — mocniej, bo palec zasłania sam znak,
+   więc reakcja musi być widoczna dookoła niego. */
+const TEXT_SCATTER_TOUCH = {
+  enabled: true,
   radius: 165,
   shift: 38,
   rotate: 22,
@@ -697,11 +708,10 @@ const NamiHaptics = {
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Dźwięk, wibracja i uderzenie znaku działają wszędzie.
-  // Na dotyku odpada tylko rozpraszanie — rozmywanie kilkudziesięciu
-  // znaków w każdej klatce kosztuje na telefonie za dużo, podczas gdy
-  // uderzenie to jedna animacja naraz.
-  const scatterOn = fine && TEXT_SCATTER && TEXT_SCATTER.enabled && !reduce;
+  // Wszystko działa wszędzie, tylko siła rozproszenia jest inna
+  // pod myszą i pod palcem.
+  const scatter = fine ? TEXT_SCATTER : TEXT_SCATTER_TOUCH;
+  const scatterOn = scatter && scatter.enabled && !reduce;
   const soundOn = TEXT_SOUND && TEXT_SOUND.enabled;
   const hapticOn = !fine && NamiHaptics.ok;
   if (!scatterOn && !soundOn && !hapticOn) return;
@@ -807,7 +817,7 @@ const NamiHaptics = {
     }
     if (!measured) measure();
 
-    const { radius, shift, rotate, blur, fade } = TEXT_SCATTER;
+    const { radius, shift, rotate, blur, fade } = scatter;
 
     /* 1. dystanse i znak najbliżej kursora — czyli „klawisz”,
           w który akurat uderzamy */
