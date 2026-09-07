@@ -82,11 +82,11 @@ const TEXT_SCATTER = {
    więc reakcja musi być widoczna dookoła niego. */
 const TEXT_SCATTER_TOUCH = {
   enabled: true,
-  radius: 165,
-  shift: 38,
-  rotate: 22,
-  blur: 2.4,
-  fade: 0.45
+  radius: 220,
+  shift: 80,
+  rotate: 26,
+  blur: 1.2,
+  fade: 0.5
 };
 
 /* =========================================================
@@ -174,6 +174,12 @@ const NamiAudio = (() => {
 
     ctx = new AC();
 
+    // iOS 17+: bez tego Web Audio milczy, gdy telefon ma włączony
+    // sprzętowy przełącznik ciszy
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    } catch (e) { /* nieobsługiwane */ }
+
     noteBus = ctx.createGain();
     noteBus.gain.value = TEXT_SOUND.volume;
 
@@ -209,10 +215,20 @@ const NamiAudio = (() => {
     return ctx;
   }
 
-  function ready() {
+  /* Kontekst budzi się asynchronicznie, więc pierwszy dotyk trafiał
+     w stan 'suspended' i po prostu nic nie grało. Teraz zamiast
+     rezygnować, czekamy na wybudzenie i gramy chwilę później. */
+  function play(emit) {
     const c = init();
-    if (!c || NamiFx.muted || c.state !== 'running') return null;
-    return c;
+    if (!c || NamiFx.muted) return;
+
+    if (c.state !== 'running') {
+      c.resume().then(() => {
+        if (!NamiFx.muted) emit(c);
+      }).catch(() => { /* zablokowane do czasu gestu */ });
+      return;
+    }
+    emit(c);
   }
 
   function unlock() {
@@ -225,9 +241,10 @@ const NamiAudio = (() => {
 
   /* nuta znaku */
   function note(freq) {
-    const c = ready();
-    if (!c) return;
+    play((c) => emitNote(c, freq));
+  }
 
+  function emitNote(c, freq) {
     const t = c.currentTime;
     const osc = c.createOscillator();
     osc.type = TEXT_SOUND.wave;
@@ -249,9 +266,10 @@ const NamiAudio = (() => {
   /* zapadka przełączania zdjęć — suchy, pusty stuk,
      jak digital crown: krótki szum przez wąskie pasmo */
   function tick() {
-    const c = ready();
-    if (!c) return;
+    play(emitTick);
+  }
 
+  function emitTick(c) {
     const t = c.currentTime;
 
     const src = c.createBufferSource();
