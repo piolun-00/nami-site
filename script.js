@@ -71,11 +71,11 @@ const NO_REPEAT = 5;
    ========================================================= */
 const TEXT_SCATTER = {
   enabled: true,
-  radius: 110,
-  shift: 20,
-  rotate: 14,
-  blur: 1.8,
-  fade: 0.35
+  radius: 165,
+  shift: 38,
+  rotate: 22,
+  blur: 2.4,
+  fade: 0.45
 };
 
 /* =========================================================
@@ -872,9 +872,13 @@ const NamiHaptics = {
     if (muted) { items.forEach(reset); lastIndex = -1; }
   });
 
+  // samo tapnięcie ma dać to samo co przejechanie: uderzenie,
+  // nutę i wibrację. Bez tego palec postawiony bez ruchu nie
+  // wywoływał pointermove i znak milczał.
   host.addEventListener('pointerdown', (e) => {
     measured = false;
-    if (e.pointerType === 'touch') NamiHaptics.tap(8);
+    pointer = { x: e.clientX, y: e.clientY };
+    schedule();
   });
 
   host.addEventListener('pointerenter', () => { measured = false; });
