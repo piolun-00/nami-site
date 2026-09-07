@@ -78,15 +78,20 @@ const TEXT_SCATTER = {
   fade: 0.35
 };
 
+/* Po tylu ms bez ruchu tekst wraca do stanu początkowego.
+   Zabezpiecza przed zawieszeniem: palec, który zniknął bez
+   pointerup, albo kursor porzucony nad tekstem. */
+const TEXT_IDLE_MS = 1400;
+
 /* To samo dla dotyku — mocniej, bo palec zasłania sam znak,
    więc reakcja musi być widoczna dookoła niego. */
 const TEXT_SCATTER_TOUCH = {
   enabled: true,
-  radius: 220,
-  shift: 80,
-  rotate: 26,
+  radius: 180,
+  shift: 46,
+  rotate: 20,
   blur: 1.2,
-  fade: 0.5
+  fade: 0.45
 };
 
 /* =========================================================
@@ -347,6 +352,7 @@ const NamiHaptics = {
     const img = document.createElement('img');
     img.draggable = false;
     img.decoding = 'async';
+    img.fetchPriority = 'high';   // pierwszy kadr to główny obrazek strony
     img.alt = '';
 
     const caption = document.createElement('figcaption');
@@ -816,6 +822,9 @@ const NamiHaptics = {
   let frame = null;
   let lastNote = 0;
   let lastIndex = -1;
+  let appliedX = NaN;      // punkt, dla którego policzono ostatnią klatkę
+  let appliedY = NaN;
+  let idleTimer = null;
 
   function reset(it) {
     if (!it.on) return;
@@ -831,27 +840,38 @@ const NamiHaptics = {
     if (!pointer || NamiFx.muted) {
       items.forEach(reset);
       lastIndex = -1;
+      appliedX = appliedY = NaN;
       return;
     }
     if (!measured) measure();
 
+    // ten sam punkt co w poprzedniej klatce — nie ma czego przeliczać
+    if (pointer.x === appliedX && pointer.y === appliedY) return;
+    appliedX = pointer.x;
+    appliedY = pointer.y;
+
     const { radius, shift, rotate, blur, fade } = scatter;
+    const radius2 = radius * radius;
 
     /* 1. dystanse i znak najbliżej kursora — czyli „klawisz”,
-          w który akurat uderzamy */
+          w który akurat uderzamy.
+          Liczymy kwadraty odległości: pierwiastek wyciągamy dopiero
+          dla tych kilkudziesięciu znaków, które faktycznie ruszamy. */
     let nearest = -1;
-    let nearestDist = Infinity;
+    let nearest2 = Infinity;
 
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
-      it.d = Math.hypot(it.x - pointer.x, it.y - pointer.y);
-      if (it.d < nearestDist) {
-        nearestDist = it.d;
+      const dx = it.x - pointer.x;
+      const dy = it.y - pointer.y;
+      it.d2 = dx * dx + dy * dy;
+      if (it.d2 < nearest2) {
+        nearest2 = it.d2;
         nearest = i;
       }
     }
 
-    const key = nearestDist < 60 ? nearest : -1;
+    const key = nearest2 < 3600 ? nearest : -1;   // 60 px
 
     /* 2. style */
     if (scatterOn) {
@@ -860,12 +880,17 @@ const NamiHaptics = {
 
         // klawisz zostaje ostry i na swoim miejscu — cała uwaga
         // idzie na jego uderzenie, rozprasza się tylko otoczenie
-        if (i === key || it.d > radius) { reset(it); continue; }
+        if (i === key || it.d2 > radius2) { reset(it); continue; }
 
-        const force = (1 - it.d / radius) ** 2;
+        const dist = Math.sqrt(it.d2);
+        const force = (1 - dist / radius) ** 2;
+
+        // ruch poniżej progu widoczności nie jest wart zapisu stylu
+        if (force < 0.015) { reset(it); continue; }
+
         const dx = it.x - pointer.x;
         const dy = it.y - pointer.y;
-        const angle = it.d === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
+        const angle = dist === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
 
         const tx = (Math.cos(angle) * shift + it.jx * shift * 0.6) * force;
         const ty = (Math.sin(angle) * shift + it.jy * shift * 0.6) * force;
@@ -903,19 +928,42 @@ const NamiHaptics = {
   // samo tapnięcie ma dać to samo co przejechanie: uderzenie,
   // nutę i wibrację. Bez tego palec postawiony bez ruchu nie
   // wywoływał pointermove i znak milczał.
+  /* Powrót do stanu początkowego. Wołane po bezczynności, po
+     puszczeniu palca i wtedy, gdy strona traci uwagę — inaczej
+     znikający wskaźnik (przełączenie apki, zgaszenie ekranu)
+     zostawiałby tekst rozsunięty na stałe. */
+  function release() {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+    pointer = null;
+    schedule();
+  }
+
+  function armIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(release, TEXT_IDLE_MS);
+  }
+
+  function track(e) {
+    pointer = { x: e.clientX, y: e.clientY };
+    armIdle();
+    schedule();
+  }
+
   host.addEventListener('pointerdown', (e) => {
     measured = false;
-    pointer = { x: e.clientX, y: e.clientY };
-    schedule();
+    track(e);
   });
 
   host.addEventListener('pointerenter', () => { measured = false; });
-  host.addEventListener('pointermove', (e) => {
-    pointer = { x: e.clientX, y: e.clientY };
-    schedule();
-  });
-  host.addEventListener('pointerleave', () => {
-    pointer = null;
-    schedule();
+  host.addEventListener('pointermove', track);
+
+  host.addEventListener('pointerleave', release);
+  host.addEventListener('pointerup', release);
+  host.addEventListener('pointercancel', release);
+
+  addEventListener('blur', release);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) release();
   });
 })();

@@ -8,7 +8,18 @@
   <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="Images/favicon.svg">
   <link rel="stylesheet" href="style.css">
+
+  <!-- fonty startują od razu, nie dopiero po rozpoznaniu układu tekstu -->
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+        href="Typefaces/UniversNextPro-Medium.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+        href="Typefaces/UniversNextPro-HeavyCond.woff2">
+
   <script>document.documentElement.classList.add('js');</script>
+
+  <!-- defer w <head>: pobieranie rusza równolegle z parsowaniem HTML,
+       więc nasłuch odblokowujący dźwięk jest gotowy wcześniej -->
+  <script src="script.js" defer></script>
 </head>
 <body>
 
@@ -64,6 +75,5 @@
 
   </div>
 
-  <script src="script.js"></script>
 </body>
 </html>

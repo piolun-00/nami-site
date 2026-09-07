@@ -8,14 +8,16 @@
 /* ---------- FONTY ---------- */
 @font-face {
   font-family: "Univers Next Pro";
-  src: url("Typefaces/UniversNextPro-Medium.ttf") format("truetype");
+  src: url("Typefaces/UniversNextPro-Medium.woff2") format("woff2"),
+       url("Typefaces/UniversNextPro-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Univers Next Pro Cond";
-  src: url("Typefaces/UniversNextPro-HeavyCond.ttf") format("truetype");
+  src: url("Typefaces/UniversNextPro-HeavyCond.woff2") format("woff2"),
+       url("Typefaces/UniversNextPro-HeavyCond.ttf") format("truetype");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
