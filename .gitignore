@@ -1,1 +1,7 @@
 .DS_Store
+
+# Kroje pisma nie trafiają do repozytorium — licencja Univers Next Pro
+# nie obejmuje redystrybucji plików. Pliki muszą leżeć lokalnie
+# i zostać wgrane na serwer docelowy osobno.
+Typefaces/*
+!Typefaces/README.md
