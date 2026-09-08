@@ -431,16 +431,30 @@ const NamiHaptics = {
   /* --- losowanie z blokadą powtórek ---
      Odpadają indeksy z NO_REPEAT ostatnich pokazań, więc to samo
      zdjęcie nie może wrócić bliżej niż co NO_REPEAT + 1 pozycji. */
-  function pick() {
-    const span = Math.min(NO_REPEAT, list.length - 1);
-    const banned = new Set(history.slice(-span));
-    queue.forEach((i) => banned.add(i));
+  function span() {
+    return Math.min(NO_REPEAT, list.length - 1);
+  }
 
+  function pick(banned) {
     const pool = [];
     for (let i = 0; i < list.length; i++) if (!banned.has(i)) pool.push(i);
 
     const from = pool.length ? pool : list.map((_, i) => i);
     return from[Math.floor(Math.random() * from.length)];
+  }
+
+  /* W przód: odpada koniec historii i to, co czeka w kolejce zapasu. */
+  function pickForward() {
+    const banned = new Set(history.slice(-span()));
+    queue.forEach((i) => banned.add(i));
+    return pick(banned);
+  }
+
+  /* W tył: odpada początek historii. Kolejki tu nie blokujemy — leży
+     po przeciwnej stronie i blokowanie jej odcinałoby trzy zdjęcia
+     od całego przewijania wstecz. */
+  function pickBackward() {
+    return pick(new Set(history.slice(0, span())));
   }
 
   /* Doładowanie następnego zdjęcia „w zapasie”. Czeka na koniec
@@ -463,7 +477,7 @@ const NamiHaptics = {
      tak samo jak przy losowaniu po jednym. */
   function fillQueue() {
     while (queue.length < PREFETCH_AHEAD) {
-      const i = pick();
+      const i = pickForward();
       queue.push(i);
       prefetch(i);
     }
@@ -546,7 +560,7 @@ const NamiHaptics = {
       cursor += 1;
       show(history[cursor]);
     } else {
-      const i = queue.length ? queue.shift() : pick();
+      const i = queue.length ? queue.shift() : pickForward();
 
       history.push(i);
       if (history.length > 40) history.shift();
@@ -562,10 +576,31 @@ const NamiHaptics = {
     if (cursor > 0) {
       cursor -= 1;
       show(history[cursor]);
-      restartAutoplay();
     } else {
-      goNext();             // na początku historii nie ma dokąd cofać
+      /* Na początku historii nie ma dokąd cofać, więc dokładamy nowe
+         zdjęcie z przodu. Wcześniej wołaliśmy tu goNext, przez co
+         przeciąganie w prawo skakało w kółko między dwoma kadrami. */
+      const i = pickBackward();
+      history.unshift(i);
+      if (history.length > 40) history.pop();
+      cursor = 0;
+      show(i);
     }
+    restartAutoplay();
+  }
+
+  /* Zmiana wywołana przez człowieka kwituje stukiem i wibracją.
+     Autoplay woła goNext/goPrev bezpośrednio, więc pozostaje cichy. */
+  function userNext() {
+    goNext();
+    NamiAudio.tick();
+    NamiHaptics.tap(8);
+  }
+
+  function userPrev() {
+    goPrev();
+    NamiAudio.tick();
+    NamiHaptics.tap(8);
   }
 
   function restartAutoplay() {
@@ -583,8 +618,8 @@ const NamiHaptics = {
   }
 
   /* --- klik w lewą / prawą część zdjęcia --- */
-  nextBtn.addEventListener('click', () => { if (dragMoved <= 8) goNext(); });
-  prevBtn.addEventListener('click', () => { if (dragMoved <= 8) goPrev(); });
+  nextBtn.addEventListener('click', () => { if (dragMoved <= 8) userNext(); });
+  prevBtn.addEventListener('click', () => { if (dragMoved <= 8) userPrev(); });
 
   /* --- sterowanie działa dopiero po najechaniu na zdjęcie --- */
   let dragMoved = 0;      // dystans ostatniego przeciągnięcia
@@ -601,8 +636,8 @@ const NamiHaptics = {
   /* --- klawiatura --- */
   document.addEventListener('keydown', (e) => {
     if (!armed()) return;
-    if (e.key === 'ArrowRight') goNext();
-    if (e.key === 'ArrowLeft') goPrev();
+    if (e.key === 'ArrowRight') userNext();
+    if (e.key === 'ArrowLeft') userPrev();
   });
 
   /* --- scroll nad zdjęciem przewija zdjęcia ---
@@ -617,8 +652,8 @@ const NamiHaptics = {
     lastWheel = now;
 
     const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    if (delta > 0) goNext();
-    else if (delta < 0) goPrev();
+    if (delta > 0) userNext();
+    else if (delta < 0) userPrev();
   }, { passive: false });
 
   /* --- przeciąganie po zdjęciu ---
@@ -643,7 +678,8 @@ const NamiHaptics = {
 
     try { stage.setPointerCapture(e.pointerId); } catch (err) { /* nieważne */ }
     clearInterval(timer);          // autoplay milczy, dopóki trzymasz
-    NamiHaptics.tap(6);            // telefon kwituje przytrzymanie
+    // bez wibracji na samo przyłożenie palca: tapnięcie i tak zmienia
+    // zdjęcie, a dwa stuknięcia pod rząd czuć jak usterkę
   });
 
   stage.addEventListener('pointermove', (e) => {
@@ -660,11 +696,8 @@ const NamiHaptics = {
       travel -= dir * DRAG_STEP;
 
       // w lewo = do przodu
-      if (dir < 0) goNext();
-      else goPrev();
-
-      NamiAudio.tick();
-      NamiHaptics.tap(8);
+      if (dir < 0) userNext();
+      else userPrev();
     }
   });
 
