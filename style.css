@@ -141,6 +141,10 @@ a {
   touch-action: pan-y;
   /* proporcja kadru z Figmy — mobile 343 x 264 */
   aspect-ratio: 343 / 264;
+  /* ...ale nigdy wyżej niż wolne miejsce na ekranie. --stage-h liczy
+     script.js z viewportu. Bez tego kadr rósł wyłącznie z szerokości
+     i wypychał stronę poza ekran, przez co strona "gumkowała". */
+  max-height: var(--stage-h, 100vh);
 }
 
 .slider__slide {

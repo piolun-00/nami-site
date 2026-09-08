@@ -693,9 +693,12 @@ const NamiHaptics = {
     const pagePad = parseFloat(getComputedStyle(page).paddingTop) +
                     parseFloat(getComputedStyle(page).paddingBottom);
     const mainPad = parseFloat(getComputedStyle(main).paddingBottom);
+    // na mobile i tablecie slider rezerwuje pod sobą miejsce
+    // na rząd z podpisem i przyciskiem
+    const sliderPad = parseFloat(getComputedStyle(slider).paddingBottom);
 
     const available = window.innerHeight - pagePad - header.offsetHeight -
-                      bottom.offsetHeight - mainPad;
+                      bottom.offsetHeight - mainPad - sliderPad;
 
     slider.style.setProperty('--stage-h', Math.max(240, Math.round(available)) + 'px');
   }
