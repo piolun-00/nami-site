@@ -90,11 +90,11 @@ const TEXT_IDLE_MS = 1400;
    więc reakcja musi być widoczna dookoła niego. */
 const TEXT_SCATTER_TOUCH = {
   enabled: true,
-  radius: 180,
-  shift: 46,
-  rotate: 20,
+  radius: 130,
+  shift: 34,
+  rotate: 18,
   blur: 1.2,
-  fade: 0.45
+  fade: 0.4
 };
 
 /* =========================================================
@@ -392,7 +392,7 @@ const NamiHaptics = {
      i podmieniamy im src. Inaczej przeglądarka pobrałaby
      wszystkie pliki naraz. */
   function makeLayer() {
-    const figure = document.createElement('figure');
+    const figure = document.createElement('div');
     figure.className = 'slider__slide';
 
     const frame = document.createElement('div');
@@ -415,6 +415,7 @@ const NamiHaptics = {
   }
 
   const layers = [makeLayer(), makeLayer()];
+  const caption = stage.querySelector('[data-caption]');
   let front = 0;
 
   const history = [];   // indeksy w kolejności wyświetlenia
@@ -482,8 +483,11 @@ const NamiHaptics = {
     back.img.srcset = data.srcset;
     back.img.src = data.src;
     back.img.alt = data.alt;
-    back.caption.textContent = data.caption;
-    back.caption.hidden = !data.caption;
+
+    if (caption) {
+      caption.textContent = data.caption || '';
+      caption.hidden = !data.caption;
+    }
 
     const setRatio = () => {
       if (back.img.naturalWidth && back.img.naturalHeight) {

@@ -158,13 +158,25 @@ a {
   object-fit: cover;
 }
 
-/* podpis zdjęcia — na mobile i tablecie po prawej pod zdjęciem,
-   bo po lewej stoi przycisk MUTE */
-.nami--caption-small {
+/* Rząd pod zdjęciem: podpis po lewej, przycisk po prawej.
+   align-items: baseline zostawia wyrównanie przeglądarce, więc oba
+   teksty siedzą na jednej linii bazowej mimo różnych stopni pisma
+   i paddingu przycisku. */
+.slider__meta {
   position: absolute;
+  left: 0;
   right: 0;
   top: 100%;
-  margin-top: 5px;   /* środek w linii ze środkiem kafla przycisku */
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.nami--caption-small {
+  margin: 0;
   font-size: 10px;
   line-height: 14px;
   white-space: nowrap;
@@ -190,11 +202,8 @@ a {
 /* przycisk MUTE — pod zdjęciem, przy jego lewej krawędzi.
    Przekreślony = efekty wyłączone. */
 .nami--mute {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  z-index: 3;
-  margin: 2px 0 0;
+  flex: none;
+  margin: 0;
   padding: 4px 7px;
   border: 0;
   border-radius: 0;
@@ -390,13 +399,11 @@ a {
     aspect-ratio: 976 / 800;
   }
 
-  .nami--caption-small {
-    margin-top: 9px;   /* jw. — kafel jest wyższy od samego tekstu */
-    font-size: 12px;
-  }
+  .slider__meta { margin-top: 6px; }
+
+  .nami--caption-small { font-size: 12px; }
 
   .nami--mute {
-    margin-top: 6px;
     font-size: 10px;
     line-height: 13px;
   }
@@ -498,12 +505,21 @@ a {
     background: none;
   }
 
+  /* Rząd zaczyna się dokładnie przy dolnej krawędzi kadru, żeby
+     obrócony podpis mógł się o nią oprzeć. Odstęp bierze na siebie
+     sam przycisk. */
+  .slider__meta {
+    margin-top: 0;
+    justify-content: flex-start;
+  }
+
+  .nami--mute { margin-top: 6px; }
+
   /* podpis pionowo, po lewej stronie zdjęcia, wyrównany do dołu */
   .nami--caption-small {
-    left: auto;
-    top: auto;
+    position: absolute;
     right: 100%;
-    bottom: 0;
+    bottom: 100%;
     margin: 0 6px 0 0;
     font-size: 12px;
     line-height: 14px;
