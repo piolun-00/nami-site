@@ -8,7 +8,11 @@
 /* ---------- FONTY ---------- */
 @font-face {
   font-family: "Univers Next Pro";
-  src: url("Typefaces/UniversNextPro-Medium.woff2") format("woff2"),
+  /* podzbior Latin-1 + Latin Extended-A: polskie znaki i cala Europa
+     Srodkowa, o polowe lzejszy od pelnego kroju. Pelne pliki zostaja
+     w Typefaces na wypadek tresci spoza tego zakresu. */
+  src: url("Typefaces/UniversNextPro-Medium-latin.woff2") format("woff2"),
+       url("Typefaces/UniversNextPro-Medium.woff2") format("woff2"),
        url("Typefaces/UniversNextPro-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
@@ -16,7 +20,11 @@
 }
 @font-face {
   font-family: "Univers Next Pro Cond";
-  src: url("Typefaces/UniversNextPro-HeavyCond.woff2") format("woff2"),
+  /* podzbior Latin-1 + Latin Extended-A: polskie znaki i cala Europa
+     Srodkowa, o polowe lzejszy od pelnego kroju. Pelne pliki zostaja
+     w Typefaces na wypadek tresci spoza tego zakresu. */
+  src: url("Typefaces/UniversNextPro-HeavyCond-latin.woff2") format("woff2"),
+       url("Typefaces/UniversNextPro-HeavyCond.woff2") format("woff2"),
        url("Typefaces/UniversNextPro-HeavyCond.ttf") format("truetype");
   font-weight: 900;
   font-style: normal;
@@ -228,9 +236,10 @@ a {
 
 .nami--text {
   width: 100%;
-  /* pion zostaje przeglądarce (przewijanie strony), poziome
-     przeciągnięcie palcem po literach należy do nas */
-  touch-action: pan-y;
+  /* Cały gest należy do nas. Przy pan-y przeglądarka przejmowała
+     ruch w pionie i wysyłała pointercancel, przez co efekt gasł
+     w połowie — stąd wrażenie natychmiastowego zaniku. */
+  touch-action: none;
   font-size: 14px;
   line-height: 17px;
   text-align: center;
@@ -289,10 +298,12 @@ a {
 
 .nami--text .ch {
   display: inline-block;
+  /* czas powrotu do spoczynku — dłuższy i miększy od rozsuwania,
+     które script.js skraca do 260 ms */
   transition:
-    transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    opacity 420ms ease,
-    filter 420ms ease;
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 520ms ease,
+    filter 520ms ease;
 }
 
 /* =========================================================

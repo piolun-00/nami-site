@@ -125,13 +125,21 @@ const NamiFx = {
   muted: false,
   _watchers: [],
 
+  /* Etykieta mówi, co się stanie po kliknięciu. aria-pressed niesie
+     stan: wciśnięty = efekty włączone. */
+  syncButtons() {
+    document.querySelectorAll('[data-mute]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(!this.muted));
+      b.textContent = this.muted
+        ? 'Turn on effects and sound'
+        : 'Turn off effects and sound';
+    });
+  },
+
   set(value) {
     this.muted = !!value;
     document.documentElement.classList.toggle('is-muted', this.muted);
-    document.querySelectorAll('[data-mute]').forEach((b) => {
-      b.setAttribute('aria-pressed', String(this.muted));
-      b.textContent = this.muted ? 'Turn on effects' : 'Turn off effects';
-    });
+    this.syncButtons();
     try { localStorage.setItem('nami-muted', this.muted ? '1' : '0'); } catch (e) { /* prywatne okno */ }
     this._watchers.forEach((fn) => fn(this.muted));
   },
@@ -139,24 +147,6 @@ const NamiFx = {
   toggle() { this.set(!this.muted); },
   onChange(fn) { this._watchers.push(fn); }
 };
-
-(function initMuteButton() {
-  let saved = null;
-  try { saved = localStorage.getItem('nami-muted'); } catch (e) { /* prywatne okno */ }
-  NamiFx.set(saved === '1');
-
-  document.querySelectorAll('[data-mute]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();          // klik w MUTE nie przewija zdjęć
-      NamiFx.toggle();
-    });
-  });
-
-  addEventListener('keydown', (e) => {
-    if (e.key === 'm' || e.key === 'M') NamiFx.toggle();
-  });
-})();
-
 
 /* =========================================================
    DŹWIĘK — wspólny silnik dla tekstu i slidera
@@ -168,6 +158,8 @@ const NamiFx = {
    ========================================================= */
 const NamiAudio = (() => {
   let ctx = null;
+  let unlocked = false;
+  const watchers = [];
   let noteBus = null;   // nuty: filtr + echo
   let tickBus = null;   // stuk: sucho, prosto na wyjście
   let noise = null;
@@ -229,6 +221,7 @@ const NamiAudio = (() => {
 
     if (c.state !== 'running') {
       c.resume().then(() => {
+        markUnlocked();
         if (!NamiFx.muted) emit(c);
       }).catch(() => { /* zablokowane do czasu gestu */ });
       return;
@@ -236,9 +229,17 @@ const NamiAudio = (() => {
     emit(c);
   }
 
+  function markUnlocked() {
+    if (unlocked || !ctx || ctx.state !== 'running') return;
+    unlocked = true;
+    watchers.forEach((fn) => fn());
+  }
+
   function unlock() {
     const c = init();
-    if (c && c.state === 'suspended') c.resume();
+    if (!c) return;
+    if (c.state === 'suspended') c.resume().then(markUnlocked).catch(() => {});
+    else markUnlocked();
   }
   ['pointerdown', 'keydown', 'touchstart'].forEach((ev) =>
     addEventListener(ev, unlock, { passive: true })
@@ -300,7 +301,13 @@ const NamiAudio = (() => {
     src.onended = () => g.disconnect();
   }
 
-  return { note, tick, unlock };
+  return {
+    note,
+    tick,
+    unlock,
+    get unlocked() { return unlocked; },
+    onUnlock(fn) { watchers.push(fn); }
+  };
 })();
 
 /* =========================================================
@@ -316,6 +323,28 @@ const NamiHaptics = {
   }
 };
 
+(function initMuteButton() {
+  // Domyślnie efekty są wyłączone. Dzięki temu kliknięcie w przycisk
+  // jest tym samym gestem, na który przeglądarka czeka, zanim wpuści
+  // dźwięk — nie trzeba użytkownika prosić o osobne kliknięcie.
+  let saved = null;
+  try { saved = localStorage.getItem('nami-muted'); } catch (e) { /* prywatne okno */ }
+  NamiFx.set(saved === null ? true : saved === '1');
+
+  document.querySelectorAll('[data-mute]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();          // klik w przycisk nie przewija zdjęć
+      NamiAudio.unlock();           // ten klik jest gestem odblokowującym dźwięk
+      NamiFx.toggle();
+    });
+  });
+
+  addEventListener('keydown', (e) => {
+    if (e.key === 'm' || e.key === 'M') NamiFx.toggle();
+  });
+})();
+
+
 /* --------------------------------------------------------- */
 
 (function initSlider() {
@@ -330,9 +359,10 @@ const NamiHaptics = {
     const s = typeof entry === 'string' ? { src: entry } : entry;
     const src = SLIDES_DIR + s.src;
     const small = src.replace(/(\.\w+)$/, '--sm$1');
+    const tiny = src.replace(/(\.\w+)$/, '--xs$1');
     return {
       src,
-      srcset: `${small} 1120w, ${src} 2240w`,
+      srcset: `${tiny} 720w, ${small} 1120w, ${src} 2240w`,
       alt: s.alt || '',
       caption: s.caption === undefined ? DEFAULT_CAPTION : s.caption
     };
@@ -389,6 +419,24 @@ const NamiHaptics = {
     const from = pool.length ? pool : list.map((_, i) => i);
     return from[Math.floor(Math.random() * from.length)];
   }
+
+  /* Doładowanie następnego zdjęcia „w zapasie”. Czeka na koniec
+     ładowania strony — inaczej odbierałoby pasmo pierwszemu kadrowi,
+     a i tak jest potrzebne dopiero za kilka sekund. */
+  let warm = false;
+
+  function prefetch(i) {
+    if (warm) preload(i);
+  }
+
+  function warmUp() {
+    if (warm) return;
+    warm = true;
+    if (queued !== null) preload(queued);
+  }
+
+  if (document.readyState === 'complete') setTimeout(warmUp, 300);
+  else addEventListener('load', () => setTimeout(warmUp, 300), { once: true });
 
   function preload(i) {
     const img = new Image();
@@ -459,7 +507,7 @@ const NamiHaptics = {
       show(i);
 
       queued = pick();      // losujemy już po dopisaniu do history
-      preload(queued);
+      prefetch(queued);
     }
     restartAutoplay();
   }
@@ -818,12 +866,12 @@ const NamiHaptics = {
   }
 
   /* --- pętla --- */
-  let pointer = null;
+  /* Wiele palców naraz — każdy prowadzi własną linię melodyczną.
+     Klucz to pointerId, więc mysz i pojedynczy dotyk to po prostu
+     jeden wpis w tej mapie. */
+  const pointers = new Map();
   let frame = null;
-  let lastNote = 0;
-  let lastIndex = -1;
-  let appliedX = NaN;      // punkt, dla którego policzono ostatnią klatkę
-  let appliedY = NaN;
+  let dirty = false;       // czy od ostatniej klatki coś się ruszyło
   let idleTimer = null;
 
   function reset(it) {
@@ -831,88 +879,106 @@ const NamiHaptics = {
     it.el.style.transform = '';
     it.el.style.opacity = '';
     it.el.style.filter = '';
+    it.el.style.transitionDuration = '';
     it.on = false;
   }
 
   function apply() {
     frame = null;
 
-    if (!pointer || NamiFx.muted) {
+    if (!pointers.size || NamiFx.muted) {
       items.forEach(reset);
-      lastIndex = -1;
-      appliedX = appliedY = NaN;
+      dirty = false;
       return;
     }
-    if (!measured) measure();
 
-    // ten sam punkt co w poprzedniej klatce — nie ma czego przeliczać
-    if (pointer.x === appliedX && pointer.y === appliedY) return;
-    appliedX = pointer.x;
-    appliedY = pointer.y;
+    // nic się nie ruszyło od poprzedniej klatki
+    if (!dirty) return;
+    dirty = false;
+
+    if (!measured) measure();
 
     const { radius, shift, rotate, blur, fade } = scatter;
     const radius2 = radius * radius;
+    const active = [...pointers.values()];
 
-    /* 1. dystanse i znak najbliżej kursora — czyli „klawisz”,
-          w który akurat uderzamy.
-          Liczymy kwadraty odległości: pierwiastek wyciągamy dopiero
-          dla tych kilkudziesięciu znaków, które faktycznie ruszamy. */
-    let nearest = -1;
-    let nearest2 = Infinity;
+    /* 1. dla każdego palca znak, w który akurat uderza.
+          Kwadraty odległości — pierwiastek dopiero tam, gdzie trzeba. */
+    const keys = new Set();
 
-    for (let i = 0; i < items.length; i++) {
-      const it = items[i];
-      const dx = it.x - pointer.x;
-      const dy = it.y - pointer.y;
-      it.d2 = dx * dx + dy * dy;
-      if (it.d2 < nearest2) {
-        nearest2 = it.d2;
-        nearest = i;
+    for (const p of active) {
+      let nearest = -1;
+      let best = Infinity;
+
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const dx = it.x - p.x;
+        const dy = it.y - p.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < best) { best = d2; nearest = i; }
       }
+
+      p.nearest = best < 3600 ? nearest : -1;   // 60 px
+      if (p.nearest !== -1) keys.add(p.nearest);
     }
 
-    const key = nearest2 < 3600 ? nearest : -1;   // 60 px
-
-    /* 2. style */
+    /* 2. style — wpływ palców się sumuje, więc dwa naraz
+          rozpychają tekst mocniej niż jeden */
     if (scatterOn) {
       for (let i = 0; i < items.length; i++) {
         const it = items[i];
 
-        // klawisz zostaje ostry i na swoim miejscu — cała uwaga
-        // idzie na jego uderzenie, rozprasza się tylko otoczenie
-        if (i === key || it.d2 > radius2) { reset(it); continue; }
+        // znak pod palcem zostaje ostry i na miejscu
+        if (keys.has(i)) { reset(it); continue; }
 
-        const dist = Math.sqrt(it.d2);
-        const force = (1 - dist / radius) ** 2;
+        let tx = 0;
+        let ty = 0;
+        let peak = 0;
 
-        // ruch poniżej progu widoczności nie jest wart zapisu stylu
-        if (force < 0.015) { reset(it); continue; }
+        for (const p of active) {
+          const dx = it.x - p.x;
+          const dy = it.y - p.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > radius2) continue;
 
-        const dx = it.x - pointer.x;
-        const dy = it.y - pointer.y;
-        const angle = dist === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
+          const dist = Math.sqrt(d2);
+          const force = (1 - dist / radius) ** 2;
+          if (force < 0.015) continue;      // poniżej progu widoczności
 
-        const tx = (Math.cos(angle) * shift + it.jx * shift * 0.6) * force;
-        const ty = (Math.sin(angle) * shift + it.jy * shift * 0.6) * force;
+          const angle = dist === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
+          tx += (Math.cos(angle) * shift + it.jx * shift * 0.6) * force;
+          ty += (Math.sin(angle) * shift + it.jy * shift * 0.6) * force;
+          if (force > peak) peak = force;
+        }
+
+        if (peak === 0) { reset(it); continue; }
+
+        // krótszy czas tylko na wejściu; powrót zostaje przy dłuższym
+        // z arkusza, żeby składanie tekstu było wyraźnie miękkie
+        if (!it.on) it.el.style.transitionDuration = '260ms';
 
         it.el.style.transform =
-          `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) rotate(${(it.jr * rotate * force).toFixed(2)}deg)`;
-        it.el.style.opacity = (1 - fade * force).toFixed(3);
-        it.el.style.filter = force > 0.15 ? `blur(${(blur * force).toFixed(2)}px)` : '';
+          `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) rotate(${(it.jr * rotate * peak).toFixed(2)}deg)`;
+        it.el.style.opacity = (1 - fade * peak).toFixed(3);
+        it.el.style.filter = peak > 0.15 ? `blur(${(blur * peak).toFixed(2)}px)` : '';
         it.on = true;
       }
     }
 
-    /* 3. nowy znak pod kursorem -> uderzenie i nuta */
-    if (key !== -1 && key !== lastIndex) {
-      const now = performance.now();
-      if (now - lastNote >= TEXT_SOUND.minGap) {
-        strike(items[key]);
-        if (soundOn) NamiAudio.note(items[key].freq);
-        if (hapticOn) NamiHaptics.tap(6);
-        lastNote = now;
-      }
-      lastIndex = key;
+    /* 3. uderzenia i nuty — każdy palec ma własny licznik,
+          więc dwa mogą zagrać jednocześnie */
+    const now = performance.now();
+
+    for (const p of active) {
+      if (p.nearest === -1 || p.nearest === p.lastIndex) continue;
+      if (now - p.lastNote < TEXT_SOUND.minGap) continue;
+
+      strike(items[p.nearest]);
+      if (soundOn) NamiAudio.note(items[p.nearest].freq);
+      if (hapticOn) NamiHaptics.tap(6);
+
+      p.lastNote = now;
+      p.lastIndex = p.nearest;
     }
   }
 
@@ -922,7 +988,7 @@ const NamiHaptics = {
 
   // wyciszenie natychmiast składa znaki z powrotem na miejsce
   NamiFx.onChange((muted) => {
-    if (muted) { items.forEach(reset); lastIndex = -1; }
+    if (muted) release();
   });
 
   // samo tapnięcie ma dać to samo co przejechanie: uderzenie,
@@ -935,7 +1001,8 @@ const NamiHaptics = {
   function release() {
     clearTimeout(idleTimer);
     idleTimer = null;
-    pointer = null;
+    pointers.clear();
+    dirty = true;
     schedule();
   }
 
@@ -945,8 +1012,26 @@ const NamiHaptics = {
   }
 
   function track(e) {
-    pointer = { x: e.clientX, y: e.clientY };
+    let p = pointers.get(e.pointerId);
+    if (!p) {
+      p = { lastIndex: -1, lastNote: 0, nearest: -1 };
+      pointers.set(e.pointerId, p);
+    }
+    p.x = e.clientX;
+    p.y = e.clientY;
+
+    dirty = true;
     armIdle();
+    schedule();
+  }
+
+  function drop(e) {
+    pointers.delete(e.pointerId);
+    dirty = true;
+    if (!pointers.size) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+    }
     schedule();
   }
 
@@ -958,9 +1043,9 @@ const NamiHaptics = {
   host.addEventListener('pointerenter', () => { measured = false; });
   host.addEventListener('pointermove', track);
 
-  host.addEventListener('pointerleave', release);
-  host.addEventListener('pointerup', release);
-  host.addEventListener('pointercancel', release);
+  host.addEventListener('pointerleave', drop);
+  host.addEventListener('pointerup', drop);
+  host.addEventListener('pointercancel', drop);
 
   addEventListener('blur', release);
   document.addEventListener('visibilitychange', () => {

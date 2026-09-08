@@ -57,7 +57,9 @@ z jednym wyrazem (sieroty sklejane twardą spacją). Pod myszą litery uciekają
 znak pod kursorem podskakuje i gra nutę — wysokość rośnie od lewej do prawej, w pentatonice.
 Na dotyku zostaje podskok, dźwięk i wibracja, bez rozpraszania.
 
-**Turn off effects** pod zdjęciem wyłącza dźwięk, rozpraszanie i uderzenia.
-Wybór ląduje w `localStorage`. Klawisz `M` robi to samo.
+**Turn on effects and sound** pod zdjęciem włącza dźwięk, rozpraszanie i uderzenia
+— domyślnie są wyłączone. To celowe: kliknięcie w przycisk jest tym samym gestem,
+na który czeka przeglądarka, zanim wpuści dźwięk. Wybór ląduje w `localStorage`,
+klawisz `M` robi to samo.
 
 Uwaga: iOS nie wspiera `navigator.vibrate`, więc wibracje działają tylko na Androidzie.
