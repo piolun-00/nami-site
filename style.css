@@ -211,10 +211,12 @@ a {
      zjada tło i zostawia sam tekst. Bez tego resetu kafel nie istnieje. */
   -webkit-appearance: none;
   appearance: none;
-  background-color: var(--color-fg);
   background-image: none;
+  /* efekty wyłączone: czarny kafel */
+  background-color: var(--color-fg);
   color: var(--color-bg);
   -webkit-text-fill-color: var(--color-bg);
+  box-shadow: inset 0 0 0 1px var(--color-fg);
   font-family: var(--font-text);
   font-weight: 500;
   font-size: 9px;
@@ -225,13 +227,13 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .nami--mute:hover {
-    background-color: var(--color-bg);
-    color: var(--color-fg);
-    -webkit-text-fill-color: var(--color-fg);
-    box-shadow: inset 0 0 0 1px var(--color-fg);
-  }
+/* efekty włączone: biały kafel z czarnym obrysem i czarnym tekstem.
+   Obrys robi box-shadow, nie border — dzięki temu oba stany mają
+   identyczne wymiary i przycisk nie drga przy przełączaniu. */
+.nami--mute[aria-pressed="true"] {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  -webkit-text-fill-color: var(--color-fg);
 }
 
 .nami--mute:focus-visible {

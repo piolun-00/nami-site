@@ -78,7 +78,8 @@ const TEXT_SCATTER = {
   shift: 20,
   rotate: 14,
   blur: 1.8,
-  fade: 0.35
+  fade: 0.35,
+  maxChars: 150     // pod myszą praktycznie bez limitu
 };
 
 /* Po tylu ms bez ruchu tekst wraca do stanu początkowego.
@@ -93,9 +94,13 @@ const TEXT_SCATTER_TOUCH = {
   radius: 130,
   shift: 34,
   rotate: 18,
-  blur: 1.2,
-  fade: 0.4
+  blur: 0,          // rozmycie to osobna warstwa rastrowa na każdy znak
+  fade: 0.4,        // — przy dwustu znakach telefon tego nie udźwignie
+  maxChars: 45      // twardy limit: koszt klatki nie rośnie z liczbą palców
 };
+
+/* Trzy palce wystarczą na akord, a urządzenie trzeba czymś trzymać. */
+const TEXT_MAX_TOUCHES = 3;
 
 /* =========================================================
    DŹWIĘK TEKSTU — jeden znak = jedna nuta
@@ -833,14 +838,21 @@ const NamiHaptics = {
       items.push({
         el: span,
         glyph,
-        d: 0,
         jx: Math.random() * 2 - 1,
         jy: Math.random() * 2 - 1,
         jr: Math.random() * 2 - 1,
         x: 0,
         y: 0,
         freq: 0,
-        on: false
+        on: false,
+        d2: 0,        // kwadrat odległości od aktualnie liczonego palca
+        stamp: 0,     // numer klatki, w której znak dostał wkład
+        tx: 0,
+        ty: 0,
+        peak: 0,      // najsilniejszy wpływ spośród palców
+        lastT: '',    // ostatnio zapisane wartości — nie piszemy dwa razy tego samego
+        lastO: '',
+        lastF: ''
       });
     }
   }
@@ -903,14 +915,20 @@ const NamiHaptics = {
     it.el.style.opacity = '';
     it.el.style.filter = '';
     it.el.style.transitionDuration = '';
+    it.lastT = it.lastO = it.lastF = '';
     it.on = false;
   }
+
+  let stamp = 0;              // numer klatki
+  const touched = [];         // znaki, które dostały wkład w tej klatce
+  const onNow = new Set();    // znaki aktualnie przesunięte
 
   function apply() {
     frame = null;
 
     if (!pointers.size || NamiFx.muted) {
-      items.forEach(reset);
+      onNow.forEach((i) => reset(items[i]));
+      onNow.clear();
       dirty = false;
       return;
     }
@@ -919,77 +937,108 @@ const NamiHaptics = {
     if (!dirty) return;
     dirty = false;
 
-    if (!measured) measure();
+    /* Pozycje mierzymy wyłącznie w spoczynku. getBoundingClientRect
+       uwzględnia transformacje, więc pomiar w trakcie gestu zapisałby
+       przesunięte pozycje jako spoczynkowe — psując i wykrywanie znaku
+       pod palcem, i przypisane mu nuty. */
+    if (!measured && onNow.size === 0) measure();
 
-    const { radius, shift, rotate, blur, fade } = scatter;
+    const { radius, shift, rotate, blur, fade, maxChars } = scatter;
     const radius2 = radius * radius;
+    const useBlur = blur > 0;
     const active = [...pointers.values()];
 
-    /* 1. dla każdego palca znak, w który akurat uderza.
-          Kwadraty odległości — pierwiastek dopiero tam, gdzie trzeba. */
+    stamp += 1;
+    touched.length = 0;
     const keys = new Set();
 
     for (const p of active) {
       let nearest = -1;
       let best = Infinity;
+      const near = [];
 
       for (let i = 0; i < items.length; i++) {
         const it = items[i];
         const dx = it.x - p.x;
         const dy = it.y - p.y;
         const d2 = dx * dx + dy * dy;
+
         if (d2 < best) { best = d2; nearest = i; }
+        if (scatterOn && d2 <= radius2) { it.d2 = d2; near.push(i); }
       }
 
       p.nearest = best < 3600 ? nearest : -1;   // 60 px
       if (p.nearest !== -1) keys.add(p.nearest);
-    }
 
-    /* 2. style — wpływ palców się sumuje, więc dwa naraz
-          rozpychają tekst mocniej niż jeden */
-    if (scatterOn) {
-      for (let i = 0; i < items.length; i++) {
+      if (!scatterOn) continue;
+
+      // twardy limit na wskaźnik — koszt klatki nie rośnie z liczbą palców
+      if (near.length > maxChars) {
+        near.sort((a, b) => items[a].d2 - items[b].d2);
+        near.length = maxChars;
+      }
+
+      for (const i of near) {
         const it = items[i];
+        const dist = Math.sqrt(it.d2);
+        const force = (1 - dist / radius) ** 2;
+        if (force < 0.015) continue;          // poniżej progu widoczności
 
-        // znak pod palcem zostaje ostry i na miejscu
-        if (keys.has(i)) { reset(it); continue; }
-
-        let tx = 0;
-        let ty = 0;
-        let peak = 0;
-
-        for (const p of active) {
-          const dx = it.x - p.x;
-          const dy = it.y - p.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 > radius2) continue;
-
-          const dist = Math.sqrt(d2);
-          const force = (1 - dist / radius) ** 2;
-          if (force < 0.015) continue;      // poniżej progu widoczności
-
-          const angle = dist === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
-          tx += (Math.cos(angle) * shift + it.jx * shift * 0.6) * force;
-          ty += (Math.sin(angle) * shift + it.jy * shift * 0.6) * force;
-          if (force > peak) peak = force;
+        if (it.stamp !== stamp) {
+          it.stamp = stamp;
+          it.tx = 0;
+          it.ty = 0;
+          it.peak = 0;
+          touched.push(i);
         }
 
-        if (peak === 0) { reset(it); continue; }
+        const angle = dist === 0
+          ? Math.random() * Math.PI * 2
+          : Math.atan2(it.y - p.y, it.x - p.x);
 
-        // krótszy czas tylko na wejściu; powrót zostaje przy dłuższym
-        // z arkusza, żeby składanie tekstu było wyraźnie miękkie
-        if (!it.on) it.el.style.transitionDuration = '260ms';
-
-        it.el.style.transform =
-          `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) rotate(${(it.jr * rotate * peak).toFixed(2)}deg)`;
-        it.el.style.opacity = (1 - fade * peak).toFixed(3);
-        it.el.style.filter = peak > 0.15 ? `blur(${(blur * peak).toFixed(2)}px)` : '';
-        it.on = true;
+        it.tx += (Math.cos(angle) * shift + it.jx * shift * 0.6) * force;
+        it.ty += (Math.sin(angle) * shift + it.jy * shift * 0.6) * force;
+        if (force > it.peak) it.peak = force;
       }
     }
 
-    /* 3. uderzenia i nuty — każdy palec ma własny licznik,
-          więc dwa mogą zagrać jednocześnie */
+    /* zapisy stylu — tylko dla znaków z wkładem i tylko wtedy,
+       gdy wartość faktycznie się zmieniła */
+    if (scatterOn) {
+      for (const i of touched) {
+        if (keys.has(i)) continue;            // znak pod palcem zostaje na miejscu
+
+        const it = items[i];
+        const t = `translate(${it.tx.toFixed(1)}px, ${it.ty.toFixed(1)}px) rotate(${(it.jr * rotate * it.peak).toFixed(1)}deg)`;
+        if (t !== it.lastT) { it.el.style.transform = t; it.lastT = t; }
+
+        const o = (1 - fade * it.peak).toFixed(2);
+        if (o !== it.lastO) { it.el.style.opacity = o; it.lastO = o; }
+
+        if (useBlur) {
+          const f = it.peak > 0.15 ? `blur(${(blur * it.peak).toFixed(1)}px)` : '';
+          if (f !== it.lastF) { it.el.style.filter = f; it.lastF = f; }
+        }
+
+        if (!it.on) {
+          // krótszy czas tylko na wejściu; powrót zostaje przy dłuższym
+          // z arkusza, żeby składanie tekstu było wyraźnie miękkie
+          it.el.style.transitionDuration = '260ms';
+          it.on = true;
+        }
+        onNow.add(i);
+      }
+
+      // znaki, które wypadły z zasięgu albo trafiły pod palec
+      for (const i of [...onNow]) {
+        if (items[i].stamp === stamp && !keys.has(i)) continue;
+        reset(items[i]);
+        onNow.delete(i);
+      }
+    }
+
+    /* uderzenia i nuty — każdy palec ma własny licznik,
+       więc trzy mogą zagrać jednocześnie */
     const now = performance.now();
 
     for (const p of active) {
@@ -1037,6 +1086,7 @@ const NamiHaptics = {
   function track(e) {
     let p = pointers.get(e.pointerId);
     if (!p) {
+      if (pointers.size >= TEXT_MAX_TOUCHES) return;
       p = { lastIndex: -1, lastNote: 0, nearest: -1 };
       pointers.set(e.pointerId, p);
     }
@@ -1059,7 +1109,8 @@ const NamiHaptics = {
   }
 
   host.addEventListener('pointerdown', (e) => {
-    measured = false;
+    // przeliczamy pozycje tylko przy pierwszym palcu, czyli w spoczynku
+    if (!pointers.size) measured = false;
     track(e);
   });
 
