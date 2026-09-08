@@ -1,3 +1,9 @@
+/* NAMI™ ART PRODUCTIONS — Copyright © 2026 Radek Prośniak.
+   Wszelkie prawa zastrzeżone. Kodu nie wolno powielać, wykorzystywać
+   w innych projektach ani udostępniać osobom trzecim — dotyczy to
+   również zamawiającego i jego klienta końcowego.
+   Kroje pisma i fotografie nie są objęte tą notą, patrz LICENSE. */
+
 /* =========================================================
    NAMI™ — SLIDER
    ---------------------------------------------------------
@@ -324,19 +330,6 @@ const NamiAudio = (() => {
   };
 })();
 
-/* =========================================================
-   WIBRACJE — krótkie stuknięcia na dotyku
-   Uwaga: iOS/Safari nie wspiera navigator.vibrate, więc na
-   iPhonie to po prostu nic nie zrobi. Android działa.
-   ========================================================= */
-const NamiHaptics = {
-  ok: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function',
-  tap(ms) {
-    if (!this.ok || NamiFx.muted) return;
-    try { navigator.vibrate(ms || 8); } catch (e) { /* zablokowane */ }
-  }
-};
-
 (function initMuteButton() {
   /* Efekty startują wyłączone przy każdym wejściu i nie pamiętamy
      wyboru między odsłonami. To nie jest tylko preferencja: po każdym
@@ -589,18 +582,16 @@ const NamiHaptics = {
     restartAutoplay();
   }
 
-  /* Zmiana wywołana przez człowieka kwituje stukiem i wibracją.
+  /* Zmiana wywołana przez człowieka kwituje stukiem.
      Autoplay woła goNext/goPrev bezpośrednio, więc pozostaje cichy. */
   function userNext() {
     goNext();
     NamiAudio.tick();
-    NamiHaptics.tap(8);
   }
 
   function userPrev() {
     goPrev();
     NamiAudio.tick();
-    NamiHaptics.tap(8);
   }
 
   function restartAutoplay() {
@@ -678,8 +669,6 @@ const NamiHaptics = {
 
     try { stage.setPointerCapture(e.pointerId); } catch (err) { /* nieważne */ }
     clearInterval(timer);          // autoplay milczy, dopóki trzymasz
-    // bez wibracji na samo przyłożenie palca: tapnięcie i tak zmienia
-    // zdjęcie, a dwa stuknięcia pod rząd czuć jak usterkę
   });
 
   stage.addEventListener('pointermove', (e) => {
@@ -867,8 +856,7 @@ const NamiHaptics = {
   const scatter = fine ? TEXT_SCATTER : TEXT_SCATTER_TOUCH;
   const scatterOn = scatter && scatter.enabled && !reduce;
   const soundOn = TEXT_SOUND && TEXT_SOUND.enabled;
-  const hapticOn = !fine && NamiHaptics.ok;
-  if (!scatterOn && !soundOn && !hapticOn) return;
+  if (!scatterOn && !soundOn) return;
 
   /* --- podział słów na znaki --- */
   const items = [];
@@ -1101,7 +1089,6 @@ const NamiHaptics = {
 
       strike(items[p.nearest]);
       if (soundOn) NamiAudio.note(items[p.nearest].freq);
-      if (hapticOn) NamiHaptics.tap(6);
 
       p.lastNote = now;
       p.lastIndex = p.nearest;
@@ -1117,9 +1104,9 @@ const NamiHaptics = {
     if (muted) release();
   });
 
-  // samo tapnięcie ma dać to samo co przejechanie: uderzenie,
-  // nutę i wibrację. Bez tego palec postawiony bez ruchu nie
-  // wywoływał pointermove i znak milczał.
+  // samo tapnięcie ma dać to samo co przejechanie: uderzenie
+  // i nutę. Bez tego palec postawiony bez ruchu nie wywoływał
+  // pointermove i znak milczał.
   /* Powrót do stanu początkowego. Wołane po bezczynności, po
      puszczeniu palca i wtedy, gdy strona traci uwagę — inaczej
      znikający wskaźnik (przełączenie apki, zgaszenie ekranu)

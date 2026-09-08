@@ -1,5 +1,8 @@
 # Nami™ Art Productions
 
+> Kod objęty zastrzeżeniem praw — szczegóły w pliku [LICENSE](LICENSE).
+> Kroje pisma i fotografie nie są utworami autora kodu i nie są nim objęte.
+
 Jednoekranowa strona-wizytówka. Czysty HTML/CSS/JS, bez build stepu i bez zależności —
 wystarczy otworzyć pliki w edytorze i odświeżyć przeglądarkę.
 
@@ -8,7 +11,7 @@ wystarczy otworzyć pliki w edytorze i odświeżyć przeglądarkę.
 ```
 index.html          struktura strony
 style.css           mobile first: baza = mobile, @768 tablet, @980 stopka, @1200 desktop
-script.js           slider, efekty tekstu, dźwięk, wibracje
+script.js           slider, efekty tekstu, dźwięk
 Images/Slider/      mastery PNG (2240 x 1280)
 Images/Slider/web/  WebP używane przez stronę: --xs 720, --sm 1120, --md 1600 px
                     (plik bez przyrostka to zapas 2240 px, nieużywany)
@@ -69,12 +72,12 @@ całego folderu naraz. Wariant 1120 / 2240 px wybiera `srcset`.
 
 **Sterowanie zdjęciami** działa po najechaniu na kadr: scroll, strzałki, klik w lewą
 lub prawą połowę, oraz przeciąganie — co `DRAG_STEP` pikseli jedno zdjęcie, ze stukiem
-i wibracją na każdej zapadce.
+i stukiem na każdej zapadce.
 
 **Tekst** — każde słowo siedzi w `<span class="w">`, więc wiersz nigdy nie zostaje
 z jednym wyrazem (sieroty sklejane twardą spacją). Pod myszą litery uciekają od kursora,
 znak pod kursorem podskakuje i gra nutę — wysokość rośnie od lewej do prawej, w pentatonice.
-Na dotyku zostaje podskok, dźwięk i wibracja, bez rozpraszania.
+Na dotyku rozproszenie jest słabsze i bez rozmycia.
 
 **Turn on effects and sound** pod zdjęciem włącza dźwięk, rozpraszanie i uderzenia.
 Efekty startują wyłączone przy każdym wejściu i wybór nie jest zapamiętywany —
@@ -82,4 +85,3 @@ po przeładowaniu przeglądarka i tak blokuje dźwięk do pierwszego gestu, wię
 przywrócony stan „włączone" obiecywałby dźwięk, którego nie ma. Kliknięcie
 w przycisk jest jednocześnie tym gestem. Klawisz `M` robi to samo.
 
-Uwaga: iOS nie wspiera `navigator.vibrate`, więc wibracje działają tylko na Androidzie.
