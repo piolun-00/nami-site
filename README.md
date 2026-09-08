@@ -10,7 +10,8 @@ index.html          struktura strony
 style.css           mobile first: baza = mobile, @768 tablet, @980 stopka, @1200 desktop
 script.js           slider, efekty tekstu, dźwięk, wibracje
 Images/Slider/      mastery PNG (2240 x 1280)
-Images/Slider/web/  WebP używane przez stronę: pełne 2240 px i wersje --sm 1120 px
+Images/Slider/web/  WebP używane przez stronę: --xs 720, --sm 1120, --md 1600 px
+                    (plik bez przyrostka to zapas 2240 px, nieużywany)
 Typefaces/          Univers Next Pro Medium + Heavy Condensed
 ```
 
@@ -25,9 +26,13 @@ python3 -m http.server 8765 --bind 127.0.0.1
 ## Dodawanie zdjęć do slidera
 
 1. Wrzuć master PNG do `Images/Slider/`.
-2. Wygeneruj dwie wersje WebP do `Images/Slider/web/`:
-   `slider--image-NN.webp` (2240 px) i `slider--image-NN--sm.webp` (1120 px).
-3. Dopisz nazwę pełnego pliku do tablicy `SLIDES` w `script.js`.
+2. Wygeneruj trzy wersje WebP do `Images/Slider/web/`:
+   `--xs` (720 px), `--sm` (1120 px) i `--md` (1600 px).
+3. Dopisz nazwę pliku bazowego do tablicy `SLIDES` w `script.js`.
+
+Największy wariant w `srcset` to 1600 px — celowo, bo kadr ma najwyżej
+1120 px CSS, a slider zmienia zdjęcia co 4 sekundy. Na retinie różnicy
+nie widać, a transfer spada o 45%.
 
 Wpis może być samą nazwą albo obiektem, jeśli zdjęcie ma inny podpis niż domyślny:
 `{ src: 'slider--image-29.webp', caption: '©Ktoś Inny' }`

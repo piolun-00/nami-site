@@ -3,11 +3,14 @@
    ---------------------------------------------------------
    ŻEBY DODAĆ KOLEJNE ZDJĘCIE:
    masterem jest PNG w Images/Slider, ale strona używa lekkich
-   WebP-ów z Images/Slider/web — dwie szerokości na plik:
-     slider--image-NN.webp       (2240 px, desktop / retina)
-     slider--image-NN--sm.webp   (1120 px, mobile / tablet)
-   Wrzuć nową parę do Images/Slider/web i dopisz nazwę
-   pełnego pliku do tablicy SLIDES poniżej.
+   WebP-ów z Images/Slider/web — trzy szerokości na plik:
+     slider--image-NN--xs.webp    ( 720 px, telefony)
+     slider--image-NN--sm.webp    (1120 px, tablety i gęste ekrany)
+     slider--image-NN--md.webp    (1600 px, desktop, także retina)
+   Plik slider--image-NN.webp (2240 px) leży obok jako zapas,
+   ale strona po niego nie sięga.
+   Wrzuć nowy komplet do Images/Slider/web i dopisz nazwę
+   pliku bazowego (bez przyrostka) do tablicy SLIDES poniżej.
 
    Wpis może być zwykłą nazwą pliku albo obiektem, jeśli
    dane zdjęcie ma mieć inny podpis niż domyślny:
@@ -121,8 +124,10 @@ const TEXT_SOUND = {
    Wybór zapamiętujemy, żeby nie trzeba go było klikać
    przy każdym wejściu.
    ========================================================= */
+const STORAGE_KEY = 'nami-effects';
+
 const NamiFx = {
-  muted: false,
+  muted: true,        // domyślnie wyłączone
   _watchers: [],
 
   /* Etykieta mówi, co się stanie po kliknięciu. aria-pressed niesie
@@ -136,15 +141,22 @@ const NamiFx = {
     });
   },
 
-  set(value) {
+  set(value, persist) {
     this.muted = !!value;
     document.documentElement.classList.toggle('is-muted', this.muted);
     this.syncButtons();
-    try { localStorage.setItem('nami-muted', this.muted ? '1' : '0'); } catch (e) { /* prywatne okno */ }
+
+    // Zapisujemy wyłącznie świadomy wybór. Wcześniej stan lądował
+    // w pamięci przy każdym wejściu, więc zapisana wartość z poprzedniej
+    // wizyty przykrywała domyślne ustawienie i efekty wstawały włączone.
+    if (persist) {
+      try { localStorage.setItem(STORAGE_KEY, this.muted ? 'off' : 'on'); } catch (e) { /* prywatne okno */ }
+    }
+
     this._watchers.forEach((fn) => fn(this.muted));
   },
 
-  toggle() { this.set(!this.muted); },
+  toggle() { this.set(!this.muted, true); },
   onChange(fn) { this._watchers.push(fn); }
 };
 
@@ -328,8 +340,8 @@ const NamiHaptics = {
   // jest tym samym gestem, na który przeglądarka czeka, zanim wpuści
   // dźwięk — nie trzeba użytkownika prosić o osobne kliknięcie.
   let saved = null;
-  try { saved = localStorage.getItem('nami-muted'); } catch (e) { /* prywatne okno */ }
-  NamiFx.set(saved === null ? true : saved === '1');
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { /* prywatne okno */ }
+  NamiFx.set(saved !== 'on');
 
   document.querySelectorAll('[data-mute]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
@@ -357,12 +369,19 @@ const NamiHaptics = {
 
   const list = SLIDES.map((entry) => {
     const s = typeof entry === 'string' ? { src: entry } : entry;
-    const src = SLIDES_DIR + s.src;
-    const small = src.replace(/(\.\w+)$/, '--sm$1');
-    const tiny = src.replace(/(\.\w+)$/, '--xs$1');
+    const full = SLIDES_DIR + s.src;
+    const medium = full.replace(/(\.\w+)$/, '--md$1');
+    const small = full.replace(/(\.\w+)$/, '--sm$1');
+    const tiny = full.replace(/(\.\w+)$/, '--xs$1');
+
+    /* Największy wariant w srcset to 1600 px, mimo że plik 2240 px
+       leży obok. Kadr ma najwyżej 1120 px CSS, więc na ekranie retina
+       1600 px to i tak 1.4-1.6x gęstości — różnicy nie widać, a plik
+       waży o 45% mniej. Slider zmienia zdjęcie co 4 s, więc to jest
+       ta pozycja, która realnie decyduje o transferze. */
     return {
-      src,
-      srcset: `${tiny} 720w, ${small} 1120w, ${src} 2240w`,
+      src: medium,
+      srcset: `${tiny} 720w, ${small} 1120w, ${medium} 1600w`,
       alt: s.alt || '',
       caption: s.caption === undefined ? DEFAULT_CAPTION : s.caption
     };
