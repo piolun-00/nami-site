@@ -1,4 +1,4 @@
-/* NAMI™ ART PRODUCTIONS — Copyright © 2026 Radek Prośniak.
+/* NAMI™ ART PRODUCTIONS — Copyright © 2026 Radosław Prośniak (KHOREI).
    Wszelkie prawa zastrzeżone. Kodu nie wolno powielać, wykorzystywać
    w innych projektach ani udostępniać osobom trzecim — dotyczy to
    również zamawiającego i jego klienta końcowego.
