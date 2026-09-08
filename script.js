@@ -129,8 +129,6 @@ const TEXT_SOUND = {
    Wybór zapamiętujemy, żeby nie trzeba go było klikać
    przy każdym wejściu.
    ========================================================= */
-const STORAGE_KEY = 'nami-effects';
-
 const NamiFx = {
   muted: true,        // domyślnie wyłączone
   _watchers: [],
@@ -146,22 +144,14 @@ const NamiFx = {
     });
   },
 
-  set(value, persist) {
+  set(value) {
     this.muted = !!value;
     document.documentElement.classList.toggle('is-muted', this.muted);
     this.syncButtons();
-
-    // Zapisujemy wyłącznie świadomy wybór. Wcześniej stan lądował
-    // w pamięci przy każdym wejściu, więc zapisana wartość z poprzedniej
-    // wizyty przykrywała domyślne ustawienie i efekty wstawały włączone.
-    if (persist) {
-      try { localStorage.setItem(STORAGE_KEY, this.muted ? 'off' : 'on'); } catch (e) { /* prywatne okno */ }
-    }
-
     this._watchers.forEach((fn) => fn(this.muted));
   },
 
-  toggle() { this.set(!this.muted, true); },
+  toggle() { this.set(!this.muted); },
   onChange(fn) { this._watchers.push(fn); }
 };
 
@@ -341,12 +331,13 @@ const NamiHaptics = {
 };
 
 (function initMuteButton() {
-  // Domyślnie efekty są wyłączone. Dzięki temu kliknięcie w przycisk
-  // jest tym samym gestem, na który przeglądarka czeka, zanim wpuści
-  // dźwięk — nie trzeba użytkownika prosić o osobne kliknięcie.
-  let saved = null;
-  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { /* prywatne okno */ }
-  NamiFx.set(saved !== 'on');
+  /* Efekty startują wyłączone przy każdym wejściu i nie pamiętamy
+     wyboru między odsłonami. To nie jest tylko preferencja: po każdym
+     przeładowaniu przeglądarka i tak blokuje dźwięk do pierwszego
+     gestu, więc przywrócony stan "włączone" oznaczałby przycisk
+     obiecujący dźwięk, którego nie ma. Kliknięcie w przycisk jest
+     jednocześnie tym gestem. */
+  NamiFx.set(true);
 
   document.querySelectorAll('[data-mute]').forEach((btn) => {
     btn.addEventListener('click', (e) => {

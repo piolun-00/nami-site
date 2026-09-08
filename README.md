@@ -62,9 +62,10 @@ z jednym wyrazem (sieroty sklejane twardą spacją). Pod myszą litery uciekają
 znak pod kursorem podskakuje i gra nutę — wysokość rośnie od lewej do prawej, w pentatonice.
 Na dotyku zostaje podskok, dźwięk i wibracja, bez rozpraszania.
 
-**Turn on effects and sound** pod zdjęciem włącza dźwięk, rozpraszanie i uderzenia
-— domyślnie są wyłączone. To celowe: kliknięcie w przycisk jest tym samym gestem,
-na który czeka przeglądarka, zanim wpuści dźwięk. Wybór ląduje w `localStorage`,
-klawisz `M` robi to samo.
+**Turn on effects and sound** pod zdjęciem włącza dźwięk, rozpraszanie i uderzenia.
+Efekty startują wyłączone przy każdym wejściu i wybór nie jest zapamiętywany —
+po przeładowaniu przeglądarka i tak blokuje dźwięk do pierwszego gestu, więc
+przywrócony stan „włączone" obiecywałby dźwięk, którego nie ma. Kliknięcie
+w przycisk jest jednocześnie tym gestem. Klawisz `M` robi to samo.
 
 Uwaga: iOS nie wspiera `navigator.vibrate`, więc wibracje działają tylko na Androidzie.
