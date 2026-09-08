@@ -15,6 +15,12 @@ Images/Slider/web/  WebP używane przez stronę: --xs 720, --sm 1120, --md 1600 
 Typefaces/          Univers Next Pro Medium + Heavy Condensed
 ```
 
+## Cache
+
+`style.css` i `script.js` są linkowane z `?v=N`. Po zmianie w którymkolwiek
+z nich podbij ten numer w `index.html` — inaczej przeglądarka, zwłaszcza
+na telefonie, potrafi serwować starą wersję mimo odświeżenia strony.
+
 ## Podgląd lokalny
 
 Fonty ładowane z `file://` bywają blokowane, więc uruchom przez serwer:

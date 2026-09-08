@@ -7,7 +7,10 @@
   <meta name="description" content="Nami™ Art Productions — everything in nature moves in waves. Light, water and above all, sound.">
   <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="Images/favicon.svg">
-  <link rel="stylesheet" href="style.css">
+  <!-- ?v= przy stylach i skrypcie: bez tego przeglądarka potrafi
+       trzymać starą wersję pliku mimo odświeżenia strony.
+       Podbij numer po każdej zmianie w style.css lub script.js. -->
+  <link rel="stylesheet" href="style.css?v=2">
 
   <!-- fonty startują od razu, nie dopiero po rozpoznaniu układu tekstu -->
   <link rel="preload" as="font" type="font/woff2" crossorigin
@@ -19,7 +22,7 @@
 
   <!-- defer w <head>: pobieranie rusza równolegle z parsowaniem HTML,
        więc nasłuch odblokowujący dźwięk jest gotowy wcześniej -->
-  <script src="script.js" defer></script>
+  <script src="script.js?v=2" defer></script>
 </head>
 <body>
 

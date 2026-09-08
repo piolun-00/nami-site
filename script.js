@@ -500,15 +500,25 @@ const NamiHaptics = {
   }
 
   /* Podmieniamy dopiero gdy plik jest gotowy — inaczej
-     przenikalibyśmy do pustej warstwy. */
+     przenikalibyśmy do pustej warstwy.
+
+     Żeton pilnuje kolejności: przy szybkim przeciąganiu leci kilka
+     żądań naraz i te z pamięci podręcznej wracają natychmiast, a świeże
+     dopiero po pobraniu. Bez tego spóźniona odpowiedź nadpisywała
+     nowszy kadr i zdjęcia skakały tam i z powrotem. */
+  let request = 0;
+
   function show(i) {
+    const token = ++request;
     const img = preload(i);
+    const go = () => { if (token === request) render(i); };
+
     if (img.complete) {
-      render(i);
+      go();
       return;
     }
-    img.addEventListener('load', () => render(i), { once: true });
-    img.addEventListener('error', () => render(i), { once: true });
+    img.addEventListener('load', go, { once: true });
+    img.addEventListener('error', go, { once: true });
   }
 
   function goNext() {

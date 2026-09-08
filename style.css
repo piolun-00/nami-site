@@ -204,7 +204,11 @@ a {
 .nami--mute {
   flex: none;
   margin: 0;
-  padding: 4px 7px;
+  /* Metryki kroju są niesymetryczne, a napis nie ma wydłużeń dolnych,
+     więc przy równym paddingu tekst siada optycznie o ~1.4 px za wysoko.
+     Kompensata w em, żeby trzymała się przy każdym stopniu pisma. */
+  --optical-shift: 0.08em;
+  padding: calc(4px + var(--optical-shift)) 7px calc(4px - var(--optical-shift));
   border: 0;
   border-radius: 0;
   /* Safari na iOS nakłada na <button> własny wygląd systemowy, który
