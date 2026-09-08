@@ -15,6 +15,14 @@ Images/Slider/web/  WebP używane przez stronę: --xs 720, --sm 1120, --md 1600 
 Typefaces/          Univers Next Pro Medium + Heavy Condensed
 ```
 
+## Open Graph
+
+Podgląd linku ustawiają metatagi w `<head>`, obrazek to `Images/nami--open-graph.png`
+(1200 x 630 px). **`og:url` i `og:image` muszą być pełnymi adresami z domeną** —
+przed publikacją podmień `https://nami-art-productions.pl` na docelowy adres.
+Po zmianie warto przepuścić stronę przez debugger Facebooka i LinkedIna, bo oba
+mocno cache'ują pierwszy odczyt.
+
 ## Cache
 
 `style.css` i `script.js` są linkowane z `?v=N`. Po zmianie w którymkolwiek

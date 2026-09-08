@@ -5,12 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nami™ Art Productions</title>
   <meta name="description" content="Nami™ Art Productions — everything in nature moves in waves. Light, water and above all, sound.">
+
+  <!-- Podgląd linku w komunikatorach i mediach społecznościowych.
+       UWAGA: og:url i og:image muszą być pełnymi adresami z domeną —
+       podmień https://nami-art-productions.pl na docelowy adres. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Nami™ Art Productions">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:url" content="https://nami-art-productions.pl/">
+  <meta property="og:title" content="Nami™ Art Productions">
+  <meta property="og:description" content="Everything in nature moves in waves. Light, water and above all, sound.">
+  <meta property="og:image" content="https://nami-art-productions.pl/Images/nami--open-graph.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Nami™ Art Productions logotype">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nami™ Art Productions">
+  <meta name="twitter:description" content="Everything in nature moves in waves. Light, water and above all, sound.">
+  <meta name="twitter:image" content="https://nami-art-productions.pl/Images/nami--open-graph.png">
+  <meta name="twitter:image:alt" content="Nami™ Art Productions logotype">
   <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="Images/favicon.svg">
   <!-- ?v= przy stylach i skrypcie: bez tego przeglądarka potrafi
        trzymać starą wersję pliku mimo odświeżenia strony.
        Podbij numer po każdej zmianie w style.css lub script.js. -->
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=7">
 
   <!-- fonty startują od razu, nie dopiero po rozpoznaniu układu tekstu -->
   <link rel="preload" as="font" type="font/woff2" crossorigin
@@ -22,7 +43,7 @@
 
   <!-- defer w <head>: pobieranie rusza równolegle z parsowaniem HTML,
        więc nasłuch odblokowujący dźwięk jest gotowy wcześniej -->
-  <script src="script.js?v=4" defer></script>
+  <script src="script.js?v=7" defer></script>
 </head>
 <body>
 
@@ -51,7 +72,12 @@
                zrówna je do wspólnej linii bazowej -->
           <div class="slider__meta">
             <p class="nami--caption-small" data-caption>©Rafał Masłow</p>
-            <button class="nami--mute" type="button" data-mute aria-pressed="false">Turn on effects and sound</button>
+            <button class="nami--mute" type="button" data-mute aria-pressed="false" aria-label="Turn on effects and sound">
+              <!-- oba napisy leżą w tej samej komórce siatki, więc szerokość
+                   przycisku bierze się z dłuższego i nie skacze przy przełączaniu -->
+              <span class="nami--mute__on" aria-hidden="true">Turn on effects and sound</span>
+              <span class="nami--mute__off" aria-hidden="true">Turn off effects and sound</span>
+            </button>
           </div>
         </div>
       </div>

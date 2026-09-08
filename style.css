@@ -220,6 +220,14 @@ a {
    Przekreślony = efekty wyłączone. */
 .nami--mute {
   flex: none;
+  /* siatka trzyma oba napisy w jednej komórce — szerokość wyznacza
+     dłuższy z nich, więc kafel nie zmienia rozmiaru przy przełączaniu */
+  display: grid;
+  justify-items: center;
+  /* siatka jako element flex oddaje w górę linię bazową swojego
+     pierwszego wiersza dopiero przy tym ustawieniu — bez niego
+     przycisk równał się do krawędzi pudełka, nie do tekstu */
+  align-items: baseline;
   margin: 0;
   /* Metryki kroju są niesymetryczne, a napis nie ma wydłużeń dolnych,
      więc przy równym paddingu tekst siada optycznie o ~1.4 px za wysoko.
@@ -246,6 +254,15 @@ a {
   transition: background-color 180ms ease, color 180ms ease,
               -webkit-text-fill-color 180ms ease, box-shadow 180ms ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.nami--mute > span { grid-area: 1 / 1; }
+
+/* widoczny jest tylko napis pasujący do stanu; visibility (a nie display)
+   zostawia drugi w układzie, dzięki czemu nadal wyznacza szerokość */
+.nami--mute[aria-pressed="false"] .nami--mute__off,
+.nami--mute[aria-pressed="true"] .nami--mute__on {
+  visibility: hidden;
 }
 
 /* efekty włączone: biały kafel z czarnym obrysem i czarnym tekstem.

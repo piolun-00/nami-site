@@ -140,11 +140,14 @@ const NamiFx = {
   /* Etykieta mówi, co się stanie po kliknięciu. aria-pressed niesie
      stan: wciśnięty = efekty włączone. */
   syncButtons() {
+    // O tym, który napis widać, decyduje arkusz stylów — oba siedzą
+    // w przycisku, żeby jego szerokość była stała. Dla czytnika ekranu
+    // oba są schowane, a nazwę niesie aria-label, żeby nie ogłaszał
+    // dwóch sprzecznych etykiet naraz.
+    const label = this.muted ? 'Turn on effects and sound' : 'Turn off effects and sound';
     document.querySelectorAll('[data-mute]').forEach((b) => {
       b.setAttribute('aria-pressed', String(!this.muted));
-      b.textContent = this.muted
-        ? 'Turn on effects and sound'
-        : 'Turn off effects and sound';
+      b.setAttribute('aria-label', label);
     });
   },
 
@@ -508,7 +511,9 @@ const NamiHaptics = {
     back.img.complete ? setRatio() : back.img.addEventListener('load', setRatio, { once: true });
 
     layers[front].figure.classList.remove('is-active');
+    layers[front].figure.setAttribute('aria-hidden', 'true');
     back.figure.classList.add('is-active');
+    back.figure.removeAttribute('aria-hidden');
     front = 1 - front;
 
     reveal();
