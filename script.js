@@ -236,8 +236,12 @@ const NamiAudio = (() => {
      w stan 'suspended' i po prostu nic nie grało. Teraz zamiast
      rezygnować, czekamy na wybudzenie i gramy chwilę później. */
   function play(emit) {
+    // wyciszenie sprawdzamy PRZED init() — inaczej sam stuk przy zmianie
+    // zdjęcia budził kontekst audio mimo wyłączonych efektów
+    if (NamiFx.muted) return;
+
     const c = init();
-    if (!c || NamiFx.muted) return;
+    if (!c) return;
 
     if (c.state !== 'running') {
       c.resume().then(() => {
@@ -261,9 +265,22 @@ const NamiAudio = (() => {
     if (c.state === 'suspended') c.resume().then(markUnlocked).catch(() => {});
     else markUnlocked();
   }
-  ['pointerdown', 'keydown', 'touchstart'].forEach((ev) =>
-    addEventListener(ev, unlock, { passive: true })
-  );
+
+  function suspend() {
+    if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
+  }
+
+  /* Kontekst audio powstaje dopiero wtedy, gdy użytkownik sam włączy
+     efekty — i jest usypiany, gdy je wyłączy. Wcześniej budziliśmy go
+     przy pierwszym dotknięciu czegokolwiek na stronie, przez co Safari
+     uznawało stronę za odtwarzającą dźwięk i przejmowało wyjście:
+     słuchawki przeskakiwały na kartę, mimo że nic nie grało.
+     Przełączenie efektów jest gestem użytkownika, więc przeglądarka
+     pozwala w tym momencie uruchomić dźwięk. */
+  NamiFx.onChange((muted) => {
+    if (muted) suspend();
+    else unlock();
+  });
 
   /* nuta znaku */
   function note(freq) {
@@ -342,8 +359,7 @@ const NamiAudio = (() => {
   document.querySelectorAll('[data-mute]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();          // klik w przycisk nie przewija zdjęć
-      NamiAudio.unlock();           // ten klik jest gestem odblokowującym dźwięk
-      NamiFx.toggle();
+      NamiFx.toggle();              // dźwięk budzi się przez NamiFx.onChange
     });
   });
 
@@ -609,8 +625,12 @@ const NamiAudio = (() => {
   }
 
   /* --- klik w lewą / prawą część zdjęcia --- */
-  nextBtn.addEventListener('click', () => { if (dragMoved <= 8) userNext(); });
-  prevBtn.addEventListener('click', () => { if (dragMoved <= 8) userPrev(); });
+  /* Strefy prev/next obsługują już tylko klawiaturę. Przy myszy i dotyku
+     przechwycenie wskaźnika przekierowuje zdarzenie click na scenę, więc
+     przyciski i tak by go nie dostały — kliknięcie łapiemy przy puszczeniu.
+     detail === 0 oznacza aktywację z klawiatury (Enter, spacja). */
+  nextBtn.addEventListener('click', (e) => { if (e.detail === 0) userNext(); });
+  prevBtn.addEventListener('click', (e) => { if (e.detail === 0) userPrev(); });
 
   /* --- sterowanie działa dopiero po najechaniu na zdjęcie --- */
   let dragMoved = 0;      // dystans ostatniego przeciągnięcia
@@ -690,16 +710,27 @@ const NamiAudio = (() => {
     }
   });
 
-  function endDrag(e) {
+  function endDrag(e, klik) {
     if (!dragging || (e && e.pointerId !== dragId)) return;
     dragging = false;
     try { stage.releasePointerCapture(dragId); } catch (err) { /* nieważne */ }
     dragId = null;
+
+    /* Puszczenie bez przeciągnięcia to kliknięcie w kadr. Stronę bierzemy
+       z miejsca puszczenia względem środka zdjęcia — lewa połowa cofa,
+       prawa przewija dalej. */
+    if (klik && dragMoved <= 8) {
+      const box = stage.getBoundingClientRect();
+      if (e.clientX < box.left + box.width / 2) userPrev();
+      else userNext();
+      return;               // user* samo restartuje autoplay
+    }
+
     restartAutoplay();
   }
 
-  stage.addEventListener('pointerup', endDrag);
-  stage.addEventListener('pointercancel', endDrag);
+  stage.addEventListener('pointerup', (e) => endDrag(e, true));
+  stage.addEventListener('pointercancel', (e) => endDrag(e, false));
 
   /* --- dostępna wysokość sceny -> --stage-h ---
      Na desktopie szerokość kadru liczy się z wysokości i proporcji,

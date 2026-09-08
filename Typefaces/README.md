@@ -4,14 +4,16 @@ Pliki fontów **nie są trzymane w tym repozytorium** — licencja
 Univers Next Pro (Linotype / Monotype) nie obejmuje redystrybucji plików,
 a publiczne repozytorium byłoby właśnie redystrybucją.
 
-Żeby strona wyglądała zgodnie z projektem, w tym katalogu muszą znaleźć się:
+Na serwer trzeba wgrać **dwa pliki**, do tego katalogu:
 
 ```
-UniversNextPro-Medium.woff2          podzbiór Latin-1 + Latin Extended-A
-UniversNextPro-HeavyCond.woff2       jw.
-UniversNextPro-Medium.ttf            pełny krój, źródło do podzbioru
-UniversNextPro-HeavyCond.ttf         jw.
+UniversNextPro-Medium-latin.woff2      podzbiór Latin-1 + Latin Extended-A
+UniversNextPro-HeavyCond-latin.woff2   jw.
 ```
+
+Tylko te dwa są wołane przez `style.css`. Pełne kroje (`.ttf`, pełne
+`.woff2`) trzymaj lokalnie jako źródło do odtworzenia podzbiorów —
+na serwerze są zbędne.
 
 Pliki dostarcza zamawiający, wraz z licencją webfont uprawniającą do
 osadzenia krojów na stronie internetowej.
@@ -23,7 +25,7 @@ zestaw z `font-family`: Helvetica Neue / Helvetica / Arial, a dla napisów
 z kroju wąskiego Helvetica Neue Condensed / Arial Narrow. Proporcje
 i układ zostają, zmienia się sam rysunek liter.
 
-W konsoli pojawią się wtedy dwa nieudane pobrania z `rel=preload` —
+W konsoli pojawią się wtedy nieudane pobrania obu plików —
 to oczekiwane i nie wpływa na działanie strony.
 
 ## Odtworzenie podzbiorów
