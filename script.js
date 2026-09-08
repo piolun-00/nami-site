@@ -26,34 +26,34 @@ const SLIDE_SIZES =
   '(min-width: 1200px) 1120px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)';
 
 const SLIDES = [
-  'slider--image-01.webp',
-  'slider--image-02.webp',
-  'slider--image-03.webp',
-  'slider--image-04.webp',
-  'slider--image-05.webp',
-  'slider--image-06.webp',
-  'slider--image-07.webp',
-  'slider--image-08.webp',
-  'slider--image-09.webp',
-  'slider--image-10.webp',
-  'slider--image-11.webp',
-  'slider--image-12.webp',
-  'slider--image-13.webp',
-  'slider--image-14.webp',
-  'slider--image-15.webp',
-  'slider--image-16.webp',
-  'slider--image-17.webp',
-  'slider--image-18.webp',
-  'slider--image-19.webp',
-  'slider--image-20.webp',
-  'slider--image-21.webp',
-  'slider--image-22.webp',
-  'slider--image-23.webp',
-  'slider--image-24.webp',
-  'slider--image-25.webp',
-  'slider--image-26.webp',
-  'slider--image-27.webp',
-  'slider--image-28.webp',
+  { src: 'slider--image-01.webp', alt: 'Bass clarinet player performing outdoors, double bass and drums behind him' },
+  { src: 'slider--image-02.webp', alt: 'Backstage door sign: Room 1.001, dressing room, Wodecki Twist festival production' },
+  { src: 'slider--image-03.webp', alt: 'Two musicians with acoustic guitars talking in a backstage corridor' },
+  { src: 'slider--image-04.webp', alt: 'Guitarist with an acoustic guitar in a doorway as someone walks past' },
+  { src: 'slider--image-05.webp', alt: 'Bowl of strawberries beside artist lanyards printed Wodecki Twist' },
+  { src: 'slider--image-06.webp', alt: 'Pianist and double bass player on a small stage against a red curtain' },
+  { src: 'slider--image-07.webp', alt: 'Singer smiling into a microphone during a concert' },
+  { src: 'slider--image-08.webp', alt: 'Open air festival stage seen over the heads of the audience' },
+  { src: 'slider--image-09.webp', alt: 'Band on an outdoor stage beside large illuminated letters reading Wodecki' },
+  { src: 'slider--image-10.webp', alt: 'Lone performer rehearsing on a large theatre stage before the audience arrives' },
+  { src: 'slider--image-11.webp', alt: 'Ensemble on stage with a soloist in a yellow dress' },
+  { src: 'slider--image-12.webp', alt: 'Performer with arms raised in a mirrored lift, wearing a sequinned jacket' },
+  { src: 'slider--image-13.webp', alt: 'Pianist at a grand piano with a saxophonist beside him on a lit stage' },
+  { src: 'slider--image-14.webp', alt: 'Full auditorium on its feet, applauding' },
+  { src: 'slider--image-15.webp', alt: 'Grand piano and singers on a large concert stage lit by rows of lights' },
+  { src: 'slider--image-16.webp', alt: 'Trumpet player and guitarist performing outdoors in daylight' },
+  { src: 'slider--image-17.webp', alt: 'Motorboat with two passengers speeding along a river' },
+  { src: 'slider--image-18.webp', alt: 'Concert in an arcaded courtyard, audience watching from the balconies' },
+  { src: 'slider--image-19.webp', alt: 'French horn resting on a chair in a rehearsal room, musicians talking behind' },
+  { src: 'slider--image-20.webp', alt: 'Standing ovation in a concert hall, captured in a long exposure' },
+  { src: 'slider--image-21.webp', alt: 'Festival visitor in a cap in front of the stage while the band plays' },
+  { src: 'slider--image-22.webp', alt: 'Trumpeter and trombonist warming up in a backstage lounge' },
+  { src: 'slider--image-23.webp', alt: 'Close up of hands on the keys of a saxophone' },
+  { src: 'slider--image-24.webp', alt: 'Concert hall audience applauding, seen from the edge of the stage' },
+  { src: 'slider--image-25.webp', alt: 'Backstage rack of drums and straps beside a case marked Rafik' },
+  { src: 'slider--image-26.webp', alt: 'Two people embracing in front of illuminated letters reading Wodecki' },
+  { src: 'slider--image-27.webp', alt: 'Backstage sign reading S1 stage with an arrow' },
+  { src: 'slider--image-28.webp', alt: 'Two performers in a dimly lit lounge during a shoot' },
 ];
 
 /* Autoplay: co ile ms zmienia się zdjęcie (0 = tylko ręcznie) */
@@ -101,6 +101,10 @@ const TEXT_SCATTER_TOUCH = {
 
 /* Trzy palce wystarczą na akord, a urządzenie trzeba czymś trzymać. */
 const TEXT_MAX_TOUCHES = 3;
+
+/* Ile zdjęć trzymamy wczytanych w zapasie. Przy przeciąganiu zapadki
+   lecą szybciej niż pobieranie, więc jedno naprzód to za mało. */
+const PREFETCH_AHEAD = 3;
 
 /* =========================================================
    DŹWIĘK TEKSTU — jeden znak = jedna nuta
@@ -416,7 +420,7 @@ const NamiHaptics = {
 
   const history = [];   // indeksy w kolejności wyświetlenia
   let cursor = -1;      // pozycja w history (cofanie się)
-  let queued = null;    // wylosowany i wstępnie wczytany następny
+  const queue = [];     // wylosowane i wczytane w zapasie, w kolejności
   let timer = null;
   let dragging = false;
   let revealed = false;
@@ -427,7 +431,7 @@ const NamiHaptics = {
   function pick() {
     const span = Math.min(NO_REPEAT, list.length - 1);
     const banned = new Set(history.slice(-span));
-    if (queued !== null) banned.add(queued);
+    queue.forEach((i) => banned.add(i));
 
     const pool = [];
     for (let i = 0; i < list.length; i++) if (!banned.has(i)) pool.push(i);
@@ -448,7 +452,18 @@ const NamiHaptics = {
   function warmUp() {
     if (warm) return;
     warm = true;
-    if (queued !== null) preload(queued);
+    queue.forEach(preload);
+  }
+
+  /* Dolewamy do pełna: kolejne losowania biorą pod uwagę i historię,
+     i to, co już czeka w kolejce, więc blokada powtórek obowiązuje
+     tak samo jak przy losowaniu po jednym. */
+  function fillQueue() {
+    while (queue.length < PREFETCH_AHEAD) {
+      const i = pick();
+      queue.push(i);
+      prefetch(i);
+    }
   }
 
   if (document.readyState === 'complete') setTimeout(warmUp, 300);
@@ -526,17 +541,14 @@ const NamiHaptics = {
       cursor += 1;
       show(history[cursor]);
     } else {
-      const i = queued !== null ? queued : pick();
-      queued = null;
+      const i = queue.length ? queue.shift() : pick();
 
       history.push(i);
       if (history.length > 40) history.shift();
       cursor = history.length - 1;
 
       show(i);
-
-      queued = pick();      // losujemy już po dopisaniu do history
-      prefetch(queued);
+      fillQueue();          // dolewamy dopiero po dopisaniu do history
     }
     restartAutoplay();
   }
