@@ -464,9 +464,15 @@ const NamiAudio = (() => {
     return Math.min(NO_REPEAT, list.length - 1);
   }
 
+  /* Zdjęcia, których nie udało się wczytać. Wypadają z losowania,
+     żeby nie wracały przy każdym przewinięciu. */
+  const martwe = new Set();
+
   function pick(banned) {
     const pool = [];
-    for (let i = 0; i < list.length; i++) if (!banned.has(i)) pool.push(i);
+    for (let i = 0; i < list.length; i++) {
+      if (!banned.has(i) && !martwe.has(i)) pool.push(i);
+    }
 
     const from = pool.length ? pool : list.map((_, i) => i);
     return from[Math.floor(Math.random() * from.length)];
@@ -571,17 +577,32 @@ const NamiAudio = (() => {
      nowszy kadr i zdjęcia skakały tam i z powrotem. */
   let request = 0;
 
-  function show(i) {
+  function show(i, proba) {
     const token = ++request;
     const img = preload(i);
-    const go = () => { if (token === request) render(i); };
+
+    const pokaz = () => { if (token === request) render(i); };
+
+    /* Gdy plik nie wstaje, nie przenikamy do pustej ramki — zdjęcie
+       wypada z puli i od razu bierzemy następne. Licznik prób chroni
+       przed lawiną, gdyby padł cały serwer ze zdjęciami. */
+    const blad = () => {
+      if (token !== request) return;
+      martwe.add(i);
+
+      const glebokosc = proba || 0;
+      if (glebokosc < 3 && martwe.size < list.length) {
+        show(pickForward(), glebokosc + 1);
+      }
+    };
 
     if (img.complete) {
-      go();
+      if (img.naturalWidth) pokaz();
+      else blad();
       return;
     }
-    img.addEventListener('load', go, { once: true });
-    img.addEventListener('error', go, { once: true });
+    img.addEventListener('load', pokaz, { once: true });
+    img.addEventListener('error', blad, { once: true });
   }
 
   function goNext() {

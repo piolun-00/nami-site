@@ -15,6 +15,7 @@ script.js           slider, efekty tekstu, dźwięk
 Images/Slider/      mastery PNG (2240 x 1280)
 Images/Slider/web/  WebP używane przez stronę: --xs 720, --sm 1120, --md 1600 px
                     (plik bez przyrostka to zapas 2240 px, nieużywany)
+narzedzia/          skrypt do przeliczania zdjęć (poza paczką na serwer)
 Typefaces/          Univers Next Pro Medium + Heavy Condensed
 ```
 
@@ -42,14 +43,38 @@ python3 -m http.server 8765 --bind 127.0.0.1
 
 ## Dodawanie zdjęć do slidera
 
-1. Wrzuć master PNG do `Images/Slider/`.
-2. Wygeneruj trzy wersje WebP do `Images/Slider/web/`:
-   `--xs` (720 px), `--sm` (1120 px) i `--md` (1600 px).
-3. Dopisz nazwę pliku bazowego do tablicy `SLIDES` w `script.js`.
+1. Wrzuć master do `Images/Slider/` — PNG albo JPG, dowolna nazwa.
+2. Uruchom:
 
-Największy wariant w `srcset` to 1600 px — celowo, bo kadr ma najwyżej
-1120 px CSS, a slider zmienia zdjęcia co 4 sekundy. Na retinie różnicy
-nie widać, a transfer spada o 45%.
+   ```bash
+   python3 narzedzia/konwertuj-zdjecia.py
+   ```
+
+3. Skrypt wypisze na końcu gotową linijkę — wklej ją do tablicy `SLIDES`
+   w `script.js` i podmień `OPIS PO ANGIELSKU` na opis tego, co widać.
+4. Podbij `?v=` przy `script.js` w `index.html`.
+
+Skrypt przelicza tylko to, czego brakuje, więc można go puszczać ile razy
+chcesz. `--nadpisz` przelicza wszystko od nowa. Przy pierwszym uruchomieniu
+sam przygotuje sobie środowisko w `narzedzia/venv` — nic nie instaluje
+w systemie, a katalog jest poza repozytorium.
+
+### Rozmiary i skąd się wzięły
+
+| wariant | szerokość | dla kogo |
+|---|---|---|
+| `--xs` | 720 px | telefony |
+| `--sm` | 1120 px | tablety i gęste ekrany telefonów |
+| `--md` | 1600 px | desktop, także retina |
+
+Wysokość wynika z proporcji oryginału, jakość WebP to 82. Mastery są
+2240 x 1280 px, ale największy wariant w `srcset` to 1600 px — celowo.
+Kadr ma najwyżej 1120 px CSS, więc na retinie 1600 px to 1.4-1.6x
+gęstości, czyli różnicy nie widać, a plik waży o 45% mniej. Przy zmianie
+zdjęcia co 4 sekundy to ta pozycja decyduje o transferze.
+
+Gdyby któryś plik nie wstał na serwerze, slider nie pokaże pustej ramki —
+zdjęcie wypada z puli losowania i od razu wchodzi następne.
 
 Wpis może być samą nazwą albo obiektem, jeśli zdjęcie ma inny podpis niż domyślny:
 `{ src: 'slider--image-29.webp', caption: '©Ktoś Inny' }`

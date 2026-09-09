@@ -5,3 +5,6 @@
 # i zostać wgrane na serwer docelowy osobno.
 Typefaces/*
 !Typefaces/README.md
+
+# środowisko narzędzia do konwersji zdjęć
+narzedzia/venv/
