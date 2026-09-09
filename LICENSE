@@ -57,7 +57,21 @@ Autor kodu nie ponosi odpowiedzialności za skutki użycia tych materiałów
 bez wymaganych licencji.
 
 
-5. AUTOR I KONTAKT
+5. NARZĘDZIA AUTOMATYCZNE I MODELE JĘZYKOWE
+
+Autor zastrzega eksplorację tekstów i danych w rozumieniu art. 4 ust. 3
+dyrektywy 2019/790 (DSM). Kod nie jest materiałem do trenowania modeli,
+do zbiorów danych ani do generowania utworów zależnych.
+
+Zastrzeżenie jest wyrażone maszynowo w trzech miejscach: pliku robots.txt,
+znaczniku meta tdm-reservation w index.html oraz w komentarzach nagłówkowych
+plików źródłowych.
+
+Modyfikacje kodu wprowadza wyłącznie autor lub osoba działająca na jego
+wyraźne polecenie.
+
+
+6. AUTOR I KONTAKT
 
 Autorem kodu jest Radosław Prośniak, KHOREI.
 W sprawie licencji wykraczającej poza zakres z punktu 2 — kontakt z autorem.
