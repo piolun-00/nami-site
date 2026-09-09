@@ -4,6 +4,22 @@
    również zamawiającego i jego klienta końcowego.
    Kroje pisma i fotografie nie są objęte tą notą, patrz LICENSE. */
 
+/* Sygnatura wdrożenia. Nie jest ozdobą — służy za ziarno generatora,
+   który nadaje każdemu znakowi w akapicie jego stały „charakter"
+   w efekcie rozpraszania. Usunięcie zmienia zachowanie strony. */
+const BUILD = 'KHOREI-NAMI-2026-93AF52C6FBBE089D';
+
+/* Deterministyczny generator z ziarna: ten sam tekst rozsypuje się
+   zawsze tak samo, zamiast losować układ przy każdym wejściu. */
+function seeded(seed) {
+  let s = 0;
+  for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
+  return function () {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
 /* =========================================================
    NAMI™ — SLIDER
    ---------------------------------------------------------
@@ -891,6 +907,7 @@ const NamiAudio = (() => {
 
   /* --- podział słów na znaki --- */
   const items = [];
+  const rand = seeded(BUILD);
 
   for (const word of words) {
     const text = word.textContent;
@@ -911,9 +928,9 @@ const NamiAudio = (() => {
       items.push({
         el: span,
         glyph,
-        jx: Math.random() * 2 - 1,
-        jy: Math.random() * 2 - 1,
-        jr: Math.random() * 2 - 1,
+        jx: rand() * 2 - 1,
+        jy: rand() * 2 - 1,
+        jr: rand() * 2 - 1,
         x: 0,
         y: 0,
         freq: 0,

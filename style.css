@@ -39,6 +39,9 @@
 
 /* ---------- TOKENY ---------- */
 :root {
+  /* sygnatura wdrożenia — patrz LICENSE */
+  --nami-build: "KHOREI-NAMI-2026-93AF52C6FBBE089D";
+
   --color-bg: #ffffff;
   --color-fg: #000000;
   --color-placeholder: #d9d9d9;
