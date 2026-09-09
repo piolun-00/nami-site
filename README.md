@@ -15,7 +15,7 @@ script.js           slider, efekty tekstu, dźwięk
 Images/Slider/      mastery PNG (2240 x 1280)
 Images/Slider/web/  WebP używane przez stronę: --xs 720, --sm 1120, --md 1600 px
                     (plik bez przyrostka to zapas 2240 px, nieużywany)
-narzedzia/          skrypt do przeliczania zdjęć (poza paczką na serwer)
+Tools/              skrypt do przeliczania zdjęć (poza paczką na serwer)
 Typefaces/          Univers Next Pro Medium + Heavy Condensed
 ```
 
@@ -47,7 +47,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
 2. Uruchom:
 
    ```bash
-   python3 narzedzia/konwertuj-zdjecia.py
+   python3 Tools/konwertuj-zdjecia.py
    ```
 
 3. Skrypt wypisze na końcu gotową linijkę — wklej ją do tablicy `SLIDES`
@@ -56,7 +56,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
 
 Skrypt przelicza tylko to, czego brakuje, więc można go puszczać ile razy
 chcesz. `--nadpisz` przelicza wszystko od nowa. Przy pierwszym uruchomieniu
-sam przygotuje sobie środowisko w `narzedzia/venv` — nic nie instaluje
+sam przygotuje sobie środowisko w `Tools/venv` — nic nie instaluje
 w systemie, a katalog jest poza repozytorium.
 
 ### Rozmiary i skąd się wzięły

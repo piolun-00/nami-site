@@ -7,11 +7,11 @@ pliki WebP w Images/Slider/web — po jednym na każdy rozmiar, którego
 używa strona. Pomija to, co już istnieje, więc można puszczać ile razy
 chcesz; przeliczy tylko nowe zdjęcia.
 
-    python3 narzedzia/konwertuj-zdjecia.py
-    python3 narzedzia/konwertuj-zdjecia.py --nadpisz    (przelicz wszystko od nowa)
+    python3 Tools/konwertuj-zdjecia.py
+    python3 Tools/konwertuj-zdjecia.py --nadpisz    (przelicz wszystko od nowa)
 
 Przy pierwszym uruchomieniu sam przygotuje sobie środowisko z biblioteką
-Pillow. Nic nie instaluje w systemie — wszystko ląduje w narzedzia/venv.
+Pillow. Nic nie instaluje w systemie — wszystko ląduje w Tools/venv.
 """
 
 import os
